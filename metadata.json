@@ -1,0 +1,6 @@
+{
+  "name": "Depósito Odelot - PDV & Gestão Comercial",
+  "description": "Sistema completo de Ponto de Venda (PDV), controle de estoque, frente de caixa rápida, emissão de comprovantes, clientes e relatórios gerenciais.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
