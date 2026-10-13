@@ -78,6 +78,9 @@ export const generateReceiptShareText = (sale: Sale, settings: StoreSettings): s
   if (sale.discount > 0) {
     text += `Desconto: -${formatCurrency(sale.discount)}\n`;
   }
+  if (sale.surcharge && sale.surcharge > 0) {
+    text += `Acréscimo: +${formatCurrency(sale.surcharge)}\n`;
+  }
   text += `*TOTAL: ${formatCurrency(sale.total)}*\n`;
   text += `Pagamento: ${getPaymentMethodLabel(sale.paymentMethod)}\n`;
   if (sale.paymentMethod === 'money' && sale.amountPaid) {

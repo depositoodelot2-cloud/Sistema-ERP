@@ -25,7 +25,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       <div className="group relative flex flex-col bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-md transition-all duration-200 overflow-hidden hover:border-emerald-500/50">
         
         {/* Product Image & Badges */}
-        <div className="relative aspect-4/3 w-full bg-slate-100 dark:bg-slate-800/80 overflow-hidden">
+        <div
+          onClick={(e) => {
+            if (product.imageUrl) {
+              e.stopPropagation();
+              setShowZoom(true);
+            }
+          }}
+          className={`relative aspect-4/3 w-full bg-slate-100 dark:bg-slate-800/80 overflow-hidden ${
+            product.imageUrl ? 'cursor-zoom-in' : ''
+          }`}
+        >
           {product.imageUrl ? (
             <img
               src={product.imageUrl}
@@ -48,7 +58,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                 e.stopPropagation();
                 setShowZoom(true);
               }}
-              className="absolute top-2 right-2 p-1.5 rounded-xl bg-slate-900/60 text-white backdrop-blur-xs hover:bg-slate-900 opacity-0 group-hover:opacity-100 transition-opacity shadow-xs"
+              className="absolute top-2 right-2 p-1.5 rounded-xl bg-slate-900/60 text-white backdrop-blur-xs hover:bg-slate-900 opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shadow-xs"
               title="Ampliar foto"
             >
               <Eye className="w-3.5 h-3.5" />
@@ -131,6 +141,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         product={product}
         isOpen={showZoom}
         onClose={() => setShowZoom(false)}
+        onAddToCart={onAddToCart}
       />
     </>
   );

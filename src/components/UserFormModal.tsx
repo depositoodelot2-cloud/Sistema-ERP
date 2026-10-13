@@ -20,7 +20,6 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
     initialOperator?.role || 'cashier'
   );
   const [pin, setPin] = useState(initialOperator?.pin || '');
-  const [avatar, setAvatar] = useState(initialOperator?.avatar || '');
   const [error, setError] = useState('');
 
   if (!isOpen) return null;
@@ -41,7 +40,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
       role,
       pin: pin.trim(),
       active: true,
-      avatar: avatar.trim() || undefined,
+      avatar: initialOperator?.avatar || undefined,
     });
     onClose();
   };
@@ -131,18 +130,6 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              URL do Avatar / Foto (opcional)
-            </label>
-            <input
-              type="url"
-              value={avatar}
-              onChange={(e) => setAvatar(e.target.value)}
-              placeholder="https://..."
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:border-emerald-500 focus:outline-none"
-            />
-          </div>
 
           {error && (
             <p className="text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 p-2.5 rounded-xl border border-rose-200">

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ArrowDown, ArrowUp, ChevronDown } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, ChevronDown } from 'lucide-react';
 
 interface CalendarDropdownPopoverProps {
   isOpen: boolean;
@@ -30,6 +30,21 @@ const MONTH_NAMES = [
 
 const WEEKDAYS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
+function formatDateBR(dateStr: string): string {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  const [y, m, d] = parts;
+  return `${d}/${m}/${y}`;
+}
+
+function getDaysDiff(startStr: string, endStr: string): number {
+  const d1 = new Date(startStr + 'T00:00:00');
+  const d2 = new Date(endStr + 'T00:00:00');
+  const diffTime = Math.abs(d2.getTime() - d1.getTime());
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+}
+
 export const CalendarDropdownPopover: React.FC<CalendarDropdownPopoverProps> = ({
   isOpen,
   onClose,
@@ -45,16 +60,45 @@ export const CalendarDropdownPopover: React.FC<CalendarDropdownPopoverProps> = (
   const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
 
   // Tab mode: 'single' (Dia Único) or 'range' (Intervalo/Período)
-  const [mode, setMode] = useState<'single' | 'range'>('single');
+  const [mode, setMode] = useState<'single' | 'range'>(() => {
+    return startDate && endDate ? 'range' : 'single';
+  });
 
   // Currently viewed month/year in calendar
-  const initialDate = selectedDate ? new Date(selectedDate + 'T12:00:00') : new Date();
+  const initialDate = startDate
+    ? new Date(startDate + 'T12:00:00')
+    : selectedDate
+    ? new Date(selectedDate + 'T12:00:00')
+    : new Date();
   const [viewYear, setViewYear] = useState<number>(initialDate.getFullYear());
   const [viewMonth, setViewMonth] = useState<number>(initialDate.getMonth());
 
   // Range selection staging
   const [rangeStart, setRangeStart] = useState<string | null>(startDate || null);
   const [rangeEnd, setRangeEnd] = useState<string | null>(endDate || null);
+
+  // Sync state whenever popover opens or props change
+  useEffect(() => {
+    if (isOpen) {
+      if (startDate && endDate) {
+        setMode('range');
+        setRangeStart(startDate);
+        setRangeEnd(endDate);
+        const d = new Date(startDate + 'T12:00:00');
+        if (!isNaN(d.getTime())) {
+          setViewYear(d.getFullYear());
+          setViewMonth(d.getMonth());
+        }
+      } else if (selectedDate) {
+        setMode('single');
+        const d = new Date(selectedDate + 'T12:00:00');
+        if (!isNaN(d.getTime())) {
+          setViewYear(d.getFullYear());
+          setViewMonth(d.getMonth());
+        }
+      }
+    }
+  }, [isOpen, startDate, endDate, selectedDate]);
 
   // Dynamic positioning calculation and viewport boundary clamping
   useEffect(() => {
@@ -78,9 +122,9 @@ export const CalendarDropdownPopover: React.FC<CalendarDropdownPopoverProps> = (
       }
 
       let top = rect.bottom + 8;
-      // If extending beyond bottom of viewport, position above parent if there's enough room
-      if (top + 400 > window.innerHeight && rect.top > 400) {
-        top = Math.max(12, rect.top - 400 - 8);
+      // If extending beyond bottom of viewport, position above parent if there's room
+      if (top + 460 > window.innerHeight && rect.top > 460) {
+        top = Math.max(12, rect.top - 460 - 8);
       }
 
       setCoords({ top, left });
@@ -203,10 +247,11 @@ export const CalendarDropdownPopover: React.FC<CalendarDropdownPopoverProps> = (
     } else {
       // Range mode
       if (!rangeStart || (rangeStart && rangeEnd)) {
+        // First click: start new range
         setRangeStart(dateStr);
         setRangeEnd(null);
       } else {
-        // Second click
+        // Second click: complete range staging
         let start = rangeStart;
         let end = dateStr;
         if (new Date(start) > new Date(end)) {
@@ -214,18 +259,30 @@ export const CalendarDropdownPopover: React.FC<CalendarDropdownPopoverProps> = (
         }
         setRangeStart(start);
         setRangeEnd(end);
-        onSelectRange(start, end);
-        onClose();
+        // Do NOT close! Show confirmation button and preview to user
       }
     }
+  };
+
+  const handleConfirmRange = () => {
+    if (!rangeStart) return;
+    const start = rangeStart;
+    const end = rangeEnd || rangeStart;
+    onSelectRange(start, end);
+    onClose();
   };
 
   const handleSelectToday = () => {
     const today = new Date();
     setViewYear(today.getFullYear());
     setViewMonth(today.getMonth());
-    onSelectSingleDate(todayStr);
-    onClose();
+    if (mode === 'single') {
+      onSelectSingleDate(todayStr);
+      onClose();
+    } else {
+      setRangeStart(todayStr);
+      setRangeEnd(todayStr);
+    }
   };
 
   const handleClear = () => {
@@ -235,11 +292,15 @@ export const CalendarDropdownPopover: React.FC<CalendarDropdownPopoverProps> = (
     onClose();
   };
 
+  // Determine active start and end for styling
+  const activeStart = rangeStart !== null ? rangeStart : startDate;
+  const activeEnd = rangeEnd !== null ? rangeEnd : (rangeStart ? null : endDate);
+
   return (
     <div
       ref={containerRef}
       style={coords ? { top: `${coords.top}px`, left: `${coords.left}px` } : undefined}
-      className={`fixed z-50 w-[calc(100vw-24px)] max-w-[320px] rounded-3xl border border-slate-200 dark:border-[#1e2f52] bg-white dark:bg-[#0e172a] p-3.5 sm:p-4 shadow-2xl animate-in fade-in zoom-in-95 duration-100 ${className}`}
+      className={`fixed z-50 w-[calc(100vw-24px)] max-w-[320px] max-h-[calc(100vh-24px)] overflow-y-auto rounded-3xl border border-slate-200 dark:border-[#1e2f52] bg-white dark:bg-[#0e172a] p-3.5 sm:p-4 shadow-2xl animate-in fade-in zoom-in-95 duration-100 ${className}`}
     >
       {/* 1. Mode Switcher: [ Dia Único ]  [ Intervalo (Período) ] */}
       <div className="p-1 rounded-2xl bg-slate-100 dark:bg-[#131f38] flex gap-1 mb-3">
@@ -314,17 +375,14 @@ export const CalendarDropdownPopover: React.FC<CalendarDropdownPopoverProps> = (
             mode === 'single' && selectedDate === item.dateStr;
 
           const isRangeStart =
-            mode === 'range' &&
-            (rangeStart === item.dateStr || startDate === item.dateStr);
+            mode === 'range' && activeStart === item.dateStr;
 
           const isRangeEnd =
-            mode === 'range' &&
-            (rangeEnd === item.dateStr || endDate === item.dateStr);
+            mode === 'range' && activeEnd === item.dateStr;
 
           const isInRange =
             mode === 'range' &&
-            ((rangeStart && rangeEnd && item.dateStr > rangeStart && item.dateStr < rangeEnd) ||
-              (startDate && endDate && item.dateStr > startDate && item.dateStr < endDate));
+            Boolean(activeStart && activeEnd && item.dateStr > activeStart && item.dateStr < activeEnd);
 
           const isHighlighted = isSelectedSingle || isRangeStart || isRangeEnd;
 
@@ -359,8 +417,69 @@ export const CalendarDropdownPopover: React.FC<CalendarDropdownPopoverProps> = (
         })}
       </div>
 
-      {/* 5. Footer Actions: [ Limpar ]      [ Hoje ] */}
-      <div className="flex items-center justify-between pt-3 mt-2 border-t border-slate-100 dark:border-[#1e2f52] px-1">
+      {/* 5. Range Mode Confirmation & Selected Interval Display */}
+      {mode === 'range' && (
+        <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-[#1e2f52] space-y-2">
+          {/* Selected interval box */}
+          {rangeStart && rangeEnd ? (
+            <div className="flex items-center justify-between bg-blue-50/90 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900/60 rounded-2xl px-3 py-2">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Intervalo Escolhido
+                </span>
+                <span className="font-black text-[#2563eb] dark:text-blue-400 text-xs">
+                  {formatDateBR(rangeStart)} até {formatDateBR(rangeEnd)}
+                </span>
+              </div>
+              <span className="text-[10px] font-black bg-blue-100 dark:bg-blue-900/70 text-[#2563eb] dark:text-blue-200 px-2.5 py-0.5 rounded-full">
+                {getDaysDiff(rangeStart, rangeEnd)} dias
+              </span>
+            </div>
+          ) : rangeStart ? (
+            <div className="flex items-center justify-between bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 rounded-2xl px-3 py-2">
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Data Inicial
+                </span>
+                <span className="font-black text-amber-700 dark:text-amber-400 text-xs">
+                  {formatDateBR(rangeStart)}
+                </span>
+              </div>
+              <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400">
+                Selecione a data final
+              </span>
+            </div>
+          ) : (
+            <div className="bg-slate-50 dark:bg-[#131f38] border border-slate-200 dark:border-[#1e2f52] rounded-2xl px-3 py-2 text-center text-xs text-slate-500 dark:text-slate-400 font-medium">
+              Clique na data de início e depois na data de fim
+            </div>
+          )}
+
+          {/* Confirm Button */}
+          <button
+            type="button"
+            onClick={handleConfirmRange}
+            disabled={!rangeStart}
+            className={`w-full py-2.5 px-3 rounded-2xl text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-md ${
+              rangeStart
+                ? 'bg-[#059669] hover:bg-[#047857] text-white shadow-emerald-700/20 active:scale-[0.98] cursor-pointer'
+                : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed shadow-none'
+            }`}
+          >
+            <Check className="w-4 h-4 stroke-[2.5]" />
+            <span>
+              {rangeStart && rangeEnd
+                ? 'Confirmar Intervalo'
+                : rangeStart
+                ? 'Confirmar Data Inicial'
+                : 'Selecione as Datas'}
+            </span>
+          </button>
+        </div>
+      )}
+
+      {/* 6. Footer Actions: [ Limpar ]      [ Hoje ] */}
+      <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-slate-100 dark:border-[#1e2f52] px-1">
         <button
           type="button"
           onClick={handleClear}

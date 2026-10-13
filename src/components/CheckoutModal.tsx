@@ -22,30 +22,27 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   onSaleComplete,
 }) => {
   const { currentOperator } = useAuth();
-  const { items, subtotal, total, discount, setDiscount, selectedCustomer, setSelectedCustomer, clearCart } = useCart();
+  const { items, subtotal, total, discount, surcharge, selectedCustomer, setSelectedCustomer, clearCart } = useCart();
   const settings = getStoredSettings();
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('money');
   const [amountPaid, setAmountPaid] = useState<number>(total);
   const [installments, setInstallments] = useState<number>(1);
   const [showCustomerModal, setShowCustomerModal] = useState<boolean>(false);
-  const [pixCopied, setPixCopied] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
+
+  const prevTotalRef = React.useRef(total);
+  React.useEffect(() => {
+    if (paymentMethod === 'money' && amountPaid === prevTotalRef.current) {
+      setAmountPaid(total);
+    }
+    prevTotalRef.current = total;
+  }, [total, paymentMethod, amountPaid]);
 
   if (!isOpen || items.length === 0) return null;
 
   const change = Math.max(0, amountPaid - total);
   const isPaidEnough = paymentMethod !== 'money' || amountPaid >= total;
-
-  const handleQuickMoney = (amount: number) => {
-    setAmountPaid(amount);
-  };
-
-  const handleCopyPix = () => {
-    navigator.clipboard.writeText(settings.pixKey || '42.189.923/0001-55');
-    setPixCopied(true);
-    setTimeout(() => setPixCopied(false), 2500);
-  };
 
   const handleFinalizeSale = () => {
     if (paymentMethod === 'money' && amountPaid < total) {
@@ -76,6 +73,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       })),
       subtotal,
       discount,
+      surcharge: surcharge || 0,
       total,
       paymentMethod,
       amountPaid: paymentMethod === 'money' ? amountPaid : total,
@@ -129,9 +127,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 <h2 className="text-lg font-black text-slate-900 dark:text-slate-100">
                   Finalizar Venda
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Selecione a forma de pagamento e confira os valores
-                </p>
               </div>
             </div>
             <button
@@ -146,32 +141,39 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           <div className="flex-1 overflow-y-auto pr-1 py-4 space-y-4">
             
             {/* Total Highlight Card */}
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-lg shadow-emerald-700/20 flex items-center justify-between">
+            <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-lg shadow-emerald-700/20 flex items-center justify-between min-h-[88px]">
               <div>
-                <span className="text-xs font-semibold text-emerald-100 block uppercase tracking-wider">
+                <span className="text-xs font-bold text-emerald-100 block uppercase tracking-wider mb-1">
                   Total a Cobrar
                 </span>
                 <span className="text-2xl sm:text-3xl font-black font-mono">
                   {formatCurrency(total)}
                 </span>
               </div>
-              <div className="text-right text-xs text-emerald-100">
-                <span>{items.length} {items.length === 1 ? 'item' : 'itens'}</span>
+              <div className="text-right text-xs text-emerald-100 space-y-1">
+                <span className="block font-medium">{items.length} {items.length === 1 ? 'item' : 'itens'}</span>
                 {discount > 0 && (
                   <span className="block font-bold text-amber-200">
                     Desconto: -{formatCurrency(discount)}
+                  </span>
+                )}
+                {surcharge > 0 && (
+                  <span className="block font-bold text-teal-200">
+                    Acréscimo: +{formatCurrency(surcharge)}
                   </span>
                 )}
               </div>
             </div>
 
             {/* Customer Identification Badge */}
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-              <div className="flex items-center gap-2.5">
-                <User className="w-4 h-4 text-slate-400" />
+            <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 min-h-[60px]">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-slate-200/80 dark:bg-slate-700/80 flex items-center justify-center shrink-0">
+                  <User className="w-4 h-4 text-slate-500 dark:text-slate-300" />
+                </div>
                 <div>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 block">Cliente</span>
-                  <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                  <span className="text-xs text-slate-500 dark:text-slate-400 block leading-tight">Cliente</span>
+                  <span className="text-sm font-bold text-slate-800 dark:text-slate-200 block leading-tight mt-0.5">
                     {selectedCustomer ? selectedCustomer.name : 'Consumidor Final (Não Identificado)'}
                   </span>
                 </div>
@@ -179,7 +181,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               <button
                 type="button"
                 onClick={() => setShowCustomerModal(true)}
-                className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
+                className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline py-1 px-2.5 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors"
               >
                 {selectedCustomer ? 'Alterar' : 'Identificar'}
               </button>
@@ -187,10 +189,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
             {/* Payment Method Selector */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2.5">
                 Forma de Pagamento
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
                 
                 {/* Dinheiro */}
                 <button
@@ -199,70 +201,100 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     setPaymentMethod('money');
                     setAmountPaid(total);
                   }}
-                  className={`p-3 rounded-2xl border text-left flex flex-col items-start gap-1 transition-all ${
+                  className={`py-4 px-3 min-h-[92px] sm:min-h-[96px] rounded-2xl border text-center flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${
                     paymentMethod === 'money'
-                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-500/20'
-                      : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-500/20 shadow-xs'
+                      : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/40 text-slate-700 dark:text-slate-300'
                   }`}
                 >
-                  <Banknote className="w-5 h-5 text-emerald-600" />
-                  <span className="text-xs font-bold">Dinheiro</span>
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
+                    paymentMethod === 'money' 
+                      ? 'bg-emerald-600 text-white' 
+                      : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400'
+                  }`}>
+                    <Banknote className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs font-bold leading-tight">Dinheiro</span>
                 </button>
 
                 {/* PIX */}
                 <button
                   type="button"
                   onClick={() => setPaymentMethod('pix')}
-                  className={`p-3 rounded-2xl border text-left flex flex-col items-start gap-1 transition-all ${
+                  className={`py-4 px-3 min-h-[92px] sm:min-h-[96px] rounded-2xl border text-center flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${
                     paymentMethod === 'pix'
-                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-500/20'
-                      : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-500/20 shadow-xs'
+                      : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/40 text-slate-700 dark:text-slate-300'
                   }`}
                 >
-                  <QrCode className="w-5 h-5 text-teal-600" />
-                  <span className="text-xs font-bold">PIX (Instantâneo)</span>
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
+                    paymentMethod === 'pix' 
+                      ? 'bg-teal-600 text-white' 
+                      : 'bg-teal-100 dark:bg-teal-950/60 text-teal-600 dark:text-teal-400'
+                  }`}>
+                    <QrCode className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs font-bold leading-tight">PIX (Instantâneo)</span>
                 </button>
 
                 {/* Cartão de Débito */}
                 <button
                   type="button"
                   onClick={() => setPaymentMethod('debit')}
-                  className={`p-3 rounded-2xl border text-left flex flex-col items-start gap-1 transition-all ${
+                  className={`py-4 px-3 min-h-[92px] sm:min-h-[96px] rounded-2xl border text-center flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${
                     paymentMethod === 'debit'
-                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-500/20'
-                      : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-500/20 shadow-xs'
+                      : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/40 text-slate-700 dark:text-slate-300'
                   }`}
                 >
-                  <CreditCard className="w-5 h-5 text-sky-600" />
-                  <span className="text-xs font-bold">Cartão de Débito</span>
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
+                    paymentMethod === 'debit' 
+                      ? 'bg-sky-600 text-white' 
+                      : 'bg-sky-100 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400'
+                  }`}>
+                    <CreditCard className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs font-bold leading-tight">Cartão de Débito</span>
                 </button>
 
                 {/* Cartão de Crédito */}
                 <button
                   type="button"
                   onClick={() => setPaymentMethod('credit')}
-                  className={`p-3 rounded-2xl border text-left flex flex-col items-start gap-1 transition-all ${
+                  className={`py-4 px-3 min-h-[92px] sm:min-h-[96px] rounded-2xl border text-center flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${
                     paymentMethod === 'credit'
-                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-500/20'
-                      : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-500/20 shadow-xs'
+                      : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/40 text-slate-700 dark:text-slate-300'
                   }`}
                 >
-                  <CreditCard className="w-5 h-5 text-indigo-600" />
-                  <span className="text-xs font-bold">Cartão de Crédito</span>
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
+                    paymentMethod === 'credit' 
+                      ? 'bg-indigo-600 text-white' 
+                      : 'bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400'
+                  }`}>
+                    <CreditCard className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs font-bold leading-tight">Cartão de Crédito</span>
                 </button>
 
                 {/* A Prazo / Fiado */}
                 <button
                   type="button"
                   onClick={() => setPaymentMethod('credit_account')}
-                  className={`p-3 rounded-2xl border text-left flex flex-col items-start gap-1 transition-all ${
+                  className={`py-4 px-3 min-h-[92px] sm:min-h-[96px] rounded-2xl border text-center flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${
                     paymentMethod === 'credit_account'
-                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-500/20'
-                      : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/40'
+                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-500/20 shadow-xs'
+                      : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/40 text-slate-700 dark:text-slate-300'
                   }`}
                 >
-                  <DollarSign className="w-5 h-5 text-amber-600" />
-                  <span className="text-xs font-bold">A Prazo / Fiado</span>
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${
+                    paymentMethod === 'credit_account' 
+                      ? 'bg-amber-600 text-white' 
+                      : 'bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400'
+                  }`}>
+                    <DollarSign className="w-5 h-5" />
+                  </div>
+                  <span className="text-xs font-bold leading-tight">A Prazo / Fiado</span>
                 </button>
               </div>
             </div>
@@ -276,30 +308,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   onChange={setAmountPaid}
                 />
 
-                {/* Quick money buttons */}
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[11px] text-slate-400 font-semibold mr-1">Rápido:</span>
-                  <button
-                    type="button"
-                    onClick={() => handleQuickMoney(total)}
-                    className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-xs font-bold text-emerald-600 hover:bg-emerald-50 dark:hover:bg-slate-600"
-                  >
-                    Exato
-                  </button>
-                  {[10, 20, 50, 100, 200].map((val) => {
-                    if (val < total && total > 50) return null;
-                    return (
-                      <button
-                        key={val}
-                        type="button"
-                        onClick={() => handleQuickMoney(val)}
-                        className="px-2.5 py-1 rounded-lg bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-xs font-mono font-bold hover:bg-slate-100 dark:hover:bg-slate-600"
-                      >
-                        R$ {val}
-                      </button>
-                    );
-                  })}
-                </div>
 
                 {/* Troco */}
                 <div className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
@@ -317,29 +325,6 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </div>
             )}
 
-            {paymentMethod === 'pix' && (
-              <div className="p-4 rounded-2xl bg-teal-50 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-800 text-center space-y-3">
-                <div className="w-36 h-36 mx-auto bg-white p-2 rounded-2xl shadow-sm border border-teal-200 flex items-center justify-center">
-                  <QrCode className="w-28 h-28 text-teal-800" />
-                </div>
-                <div>
-                  <span className="text-xs font-bold text-teal-900 dark:text-teal-200 block">
-                    Chave PIX ({settings.pixKeyType?.toUpperCase() || 'CNPJ'}):
-                  </span>
-                  <span className="font-mono text-sm font-bold text-teal-800 dark:text-teal-300">
-                    {settings.pixKey || '42.189.923/0001-55'}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleCopyPix}
-                  className="px-4 py-2 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold transition-all shadow-xs inline-flex items-center gap-1.5"
-                >
-                  <CheckCircle className="w-3.5 h-3.5" />
-                  {pixCopied ? 'Chave Copiada!' : 'Copiar Chave PIX'}
-                </button>
-              </div>
-            )}
 
             {paymentMethod === 'credit' && (
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
@@ -361,14 +346,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </div>
             )}
 
-            {/* Discount Section */}
-            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700">
-              <CurrencyInput
-                label="Desconto Geral na Venda (R$)"
-                value={discount}
-                onChange={setDiscount}
-              />
-            </div>
+
 
             {error && (
               <p className="text-xs font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40 p-2.5 rounded-xl border border-rose-200 dark:border-rose-900">
@@ -378,11 +356,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           </div>
 
           {/* Bottom Actions */}
-          <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+          <div className="pt-3.5 border-t border-slate-100 dark:border-slate-800 flex flex-col-reverse sm:flex-row items-center justify-between gap-2.5 sm:gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 text-sm font-semibold rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="w-full sm:w-auto px-5 py-3.5 text-sm font-bold rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-center"
             >
               Voltar ao Caixa
             </button>
@@ -390,7 +368,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               type="button"
               onClick={handleFinalizeSale}
               disabled={!isPaidEnough}
-              className="flex-1 py-3 px-6 text-sm font-black text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 rounded-xl shadow-lg shadow-emerald-600/25 active:scale-95 transition-all flex items-center justify-center gap-2"
+              className="w-full sm:flex-1 py-3.5 px-6 text-sm font-black text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 rounded-xl shadow-lg shadow-emerald-600/25 active:scale-95 transition-all flex items-center justify-center gap-2"
             >
               <CheckCircle className="w-5 h-5" /> Confirmar Pagamento
             </button>

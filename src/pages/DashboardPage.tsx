@@ -9,6 +9,7 @@ import {
   Coins,
   CreditCard,
   DollarSign,
+  Package,
   PieChart,
   QrCode,
   Tag,
@@ -112,6 +113,15 @@ export const DashboardPage: React.FC<{ onNavigateToInventory?: () => void }> = (
 
   // Critical stock products (stock <= minStock)
   const lowStockProducts = products.filter((p) => p.stock <= p.minStock);
+
+  // Transferred Inventory metrics
+  const totalProductsCount = products.length;
+  const totalStockRetailValue = useMemo(() => {
+    return products.reduce((acc, p) => acc + p.stock * p.sellPrice, 0);
+  }, [products]);
+  const totalStockCostValue = useMemo(() => {
+    return products.reduce((acc, p) => acc + p.stock * p.costPrice, 0);
+  }, [products]);
 
   // Payment methods breakdown
   const paymentBreakdown = useMemo(() => {
@@ -637,6 +647,98 @@ export const DashboardPage: React.FC<{ onNavigateToInventory?: () => void }> = (
         >
           Ver Ranking Completo de Categoria <ArrowUpRight className="w-3.5 h-3.5" />
         </button>
+      </div>
+ 
+      {/* ========================================================
+          9. CARDS DE ESTOQUE TRANSFERIDOS (Total de Produtos, Valor em Estoque, Custo Total)
+         ======================================================== */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#0e172a] border border-slate-200/80 dark:border-[#182642] shadow-xs">
+        <div className="flex items-center justify-between mb-3.5">
+          <div className="flex items-center gap-2">
+            <Package className="w-4 h-4 text-[#2563eb]" />
+            <h3 className="font-black text-xs sm:text-sm text-slate-900 dark:text-white">
+              Visão Geral do Estoque
+            </h3>
+          </div>
+          {onNavigateToInventory && (
+            <button
+              type="button"
+              onClick={onNavigateToInventory}
+              className="text-xs font-bold text-[#2563eb] dark:text-sky-400 hover:underline flex items-center gap-1 cursor-pointer transition-colors"
+            >
+              <span>Ir para Estoque</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {/* Card 1: Total de Produtos */}
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-850/60 border border-slate-100 dark:border-[#16233d] flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+                Total de Produtos
+              </span>
+              <div className="w-6 h-6 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-[#2563eb] dark:text-blue-400 flex items-center justify-center shrink-0">
+                <Package className="w-3.5 h-3.5" />
+              </div>
+            </div>
+
+            <div className="my-1.5">
+              <span className="text-lg sm:text-xl font-black font-mono text-slate-900 dark:text-white block">
+                {totalProductsCount} itens
+              </span>
+            </div>
+
+            <span className="text-[10px] text-slate-400 block truncate">
+              Itens cadastrados no catálogo
+            </span>
+          </div>
+
+          {/* Card 2: Valor em Estoque */}
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-850/60 border border-slate-100 dark:border-[#16233d] flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+                Valor em Estoque
+              </span>
+              <div className="w-6 h-6 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <DollarSign className="w-3.5 h-3.5" />
+              </div>
+            </div>
+
+            <div className="my-1.5">
+              <span className="text-lg sm:text-xl font-black font-mono text-[#2563eb] dark:text-sky-400 block">
+                {formatCurrency(totalStockRetailValue)}
+              </span>
+            </div>
+
+            <span className="text-[10px] text-slate-400 block truncate">
+              Preço de venda total projetado
+            </span>
+          </div>
+
+          {/* Card 3: Custo Total do Estoque */}
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-850/60 border border-slate-100 dark:border-[#16233d] flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+                Custo Total do Estoque
+              </span>
+              <div className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0">
+                <Coins className="w-3.5 h-3.5" />
+              </div>
+            </div>
+
+            <div className="my-1.5">
+              <span className="text-lg sm:text-xl font-black font-mono text-slate-900 dark:text-white block">
+                {formatCurrency(totalStockCostValue)}
+              </span>
+            </div>
+
+            <span className="text-[10px] text-slate-400 block truncate">
+              Custo total de aquisição
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Date Filter Modals */}

@@ -106,3 +106,15 @@ export const getPaymentMethodLabel = (method: PaymentMethod): string => {
       return 'Outro';
   }
 };
+
+/**
+ * Capitalizes only the first letter of each word in a string,
+ * keeping the remaining letters lowercase (Title Case).
+ * E.g.: "coca-cola 2l" -> "Coca-Cola 2l", "LÁPIS PED IRWIN" -> "Lápis Ped Irwin"
+ */
+export const formatTitleCase = (value: string): string => {
+  if (!value) return '';
+  return value.toLowerCase().replace(/(^|[^\p{L}\p{N}])(\p{L})/gu, (_match, boundary, char) => {
+    return boundary + char.toUpperCase();
+  });
+};

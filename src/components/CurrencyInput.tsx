@@ -33,7 +33,7 @@ export const CurrencyInput: React.FC<CurrencyInputProps> = ({
   return (
     <div className={`flex flex-col gap-1.5 ${className}`}>
       {label && (
-        <label htmlFor={id} className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+        <label htmlFor={id} className="text-xs font-semibold text-slate-700 dark:text-slate-300">
           {label} {required && <span className="text-rose-500">*</span>}
         </label>
       )}

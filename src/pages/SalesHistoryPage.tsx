@@ -7,7 +7,6 @@ import {
   ChevronUp,
   CreditCard,
   DollarSign,
-  FileSpreadsheet,
   FileText,
   Filter,
   Printer,
@@ -24,15 +23,13 @@ import { QuoteModal } from '../components/QuoteModal';
 import { ReceiptModal } from '../components/ReceiptModal';
 import { ReturnModal } from '../components/ReturnModal';
 import { SaleDetailModal } from '../components/SaleDetailModal';
-import { useAuth } from '../hooks/useAuth';
 import { DateRange, PaymentMethod, Sale } from '../types';
 import { getDateRange, isDateInRange } from '../utils/dateFilter';
 import { formatCurrency, formatDateTime, getPaymentMethodLabel } from '../utils/formatters';
+import { filterAndRankSales } from '../utils/semanticSearch';
 import { getStoredSales, saveStoredSales } from '../utils/storage';
 
 export const SalesHistoryPage: React.FC = () => {
-  const { currentOperator } = useAuth();
-
   const [sales, setSales] = useState<Sale[]>(getStoredSales);
   const [selectedQuickDate, setSelectedQuickDate] = useState<'all' | 'today' | 'month'>('all');
   const [singleSelectedDate, setSingleSelectedDate] = useState<string | undefined>(undefined);
@@ -75,7 +72,7 @@ export const SalesHistoryPage: React.FC = () => {
 
   // Filter sales
   const filteredSales = useMemo(() => {
-    return sales.filter((s) => {
+    const dateAndFilterSales = sales.filter((s) => {
       // Date range check
       if (selectedQuickDate === 'today') {
         const todayRange = getDateRange('today');
@@ -96,17 +93,11 @@ export const SalesHistoryPage: React.FC = () => {
       // Status filter
       if (statusFilter !== 'all' && s.status !== statusFilter) return false;
 
-      // Search check
-      const cleanSearch = search.toLowerCase().trim();
-      if (!cleanSearch) return true;
-
-      return (
-        s.code.toLowerCase().includes(cleanSearch) ||
-        (s.customerName && s.customerName.toLowerCase().includes(cleanSearch)) ||
-        s.operatorName.toLowerCase().includes(cleanSearch) ||
-        (s.customerDocument && s.customerDocument.includes(cleanSearch))
-      );
+      return true;
     });
+
+    // Semantic, partial & intent-based sales search
+    return filterAndRankSales(dateAndFilterSales, search);
   }, [sales, selectedQuickDate, singleSelectedDate, customStartDate, customEndDate, methodFilter, statusFilter, search]);
 
   // Metrics
@@ -146,12 +137,14 @@ export const SalesHistoryPage: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[#f8fafc] dark:bg-[#070e1c] text-slate-900 dark:text-white p-4 sm:p-5 max-w-xl mx-auto w-full pb-24 space-y-3.5 transition-colors">
+    <div className="flex-1 min-h-0 flex flex-col h-full overflow-hidden bg-[#f8fafc] dark:bg-[#070e1c] text-slate-900 dark:text-white max-w-xl mx-auto w-full transition-colors">
       
       {/* ========================================================
-          1. HEADER: Title, "0 efetivadas" green pill, subtitle
+          FIXED TOP AREA: STAYS FIXED AT THE TOP
          ======================================================== */}
-      <div>
+      <div className="shrink-0 px-4 sm:px-5 pt-3 sm:pt-4 pb-3 space-y-3 bg-[#f8fafc] dark:bg-[#070e1c] border-b border-slate-200/80 dark:border-[#131f38] shadow-2xs z-20 transition-colors">
+        
+        {/* 1. HEADER: Title & "0 efetivadas" green pill */}
         <div className="flex items-center gap-2">
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
             Histórico de Vendas
@@ -160,180 +153,148 @@ export const SalesHistoryPage: React.FC = () => {
             {completedSalesCount} efetivadas
           </span>
         </div>
-        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-          Consultas de cupons fiscais, estornos e faturamento
-        </p>
-      </div>
 
-      {/* ========================================================
-          2. ROW 1: Operator Pill & Orçamentos Pill
-         ======================================================== */}
-      <div className="flex items-center gap-2">
-        {/* Operator Badge Pill */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-2xl border border-blue-200/80 dark:border-blue-900/60 bg-[#f0f6ff] dark:bg-blue-950/30 text-xs shadow-2xs">
-          <span className="w-5 h-5 rounded-full bg-[#2563eb] text-white flex items-center justify-center text-[10px] font-black shrink-0">
-            {currentOperator?.name?.charAt(0) || 'C'}
-          </span>
-          <span className="px-1.5 py-0.5 rounded-md bg-blue-100 dark:bg-blue-900/70 text-blue-700 dark:text-blue-300 font-black text-[9px] tracking-wide">
-            {currentOperator?.role === 'admin' ? 'ADMIN' : 'OPERADOR'}
-          </span>
-        </div>
-
-        {/* Orçamentos Button */}
-        <button
-          type="button"
-          onClick={() => setShowQuoteModal(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl border border-indigo-200 dark:border-indigo-900/60 bg-[#f5f7ff] dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-950/50 text-xs font-bold shadow-2xs transition-all active:scale-95"
-        >
-          <FileText className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-          <span>Orçamentos</span>
-        </button>
-      </div>
-
-      {/* ========================================================
-          3. ROW 2: Hoje, Mês, Calendário Tudo, Filtro Status, Filtro Pagamento
-         ======================================================== */}
-      <div className="flex items-center gap-1.5 flex-wrap">
-        {/* Hoje */}
-        <button
-          type="button"
-          onClick={() => {
-            setSelectedQuickDate('today');
-            setSingleSelectedDate(undefined);
-            setCustomStartDate(undefined);
-            setCustomEndDate(undefined);
-            setShowCalendarDropdown(false);
-          }}
-          className={`px-3.5 py-1.5 rounded-2xl text-xs font-black transition-all active:scale-95 ${
-            selectedQuickDate === 'today'
-              ? 'bg-[#2563eb] text-white shadow-xs'
-              : 'bg-white dark:bg-[#0e172a] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#1e2f52] hover:bg-slate-50'
-          }`}
-        >
-          Hoje
-        </button>
-
-        {/* Mês */}
-        <button
-          type="button"
-          onClick={() => {
-            setSelectedQuickDate('month');
-            setSingleSelectedDate(undefined);
-            setCustomStartDate(undefined);
-            setCustomEndDate(undefined);
-            setShowCalendarDropdown(false);
-          }}
-          className={`px-3 py-1.5 rounded-2xl text-xs font-bold transition-all active:scale-95 ${
-            selectedQuickDate === 'month'
-              ? 'bg-[#2563eb] text-white shadow-xs'
-              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-          }`}
-        >
-          Mês
-        </button>
-
-        {/* Calendário Tudo Button with Interactive Dropdown Popover */}
-        <div className="relative">
+        {/* 2. ROW 1: Orçamentos & Filtro de Pagamento (Alinhados nas laterais) */}
+        <div className="flex items-center justify-between w-full">
+          {/* Orçamentos Button (Lado esquerdo) */}
           <button
             type="button"
-            onClick={() => setShowCalendarDropdown((prev) => !prev)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-2xl border text-xs font-bold shadow-2xs transition-all active:scale-95 cursor-pointer ${
-              showCalendarDropdown || customDateLabel !== 'Tudo'
-                ? 'border-blue-400 bg-blue-50/80 dark:bg-blue-950/40 text-[#2563eb] dark:text-blue-400'
-                : 'border-slate-200 dark:border-[#1e2f52] bg-white dark:bg-[#0e172a] text-slate-700 dark:text-slate-200 hover:bg-slate-50'
-            }`}
+            onClick={() => setShowQuoteModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl border border-indigo-200 dark:border-indigo-900/60 bg-[#f5f7ff] dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-950/50 text-xs font-bold shadow-2xs transition-all active:scale-95 cursor-pointer"
           >
-            <Calendar className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-            <span>{customDateLabel}</span>
-            {showCalendarDropdown ? (
-              <ChevronUp className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 stroke-[2.5]" />
-            ) : (
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400 stroke-[2.5]" />
-            )}
+            <FileText className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+            <span>Orçamentos</span>
           </button>
 
-          <CalendarDropdownPopover
-            isOpen={showCalendarDropdown}
-            onClose={() => setShowCalendarDropdown(false)}
-            selectedDate={singleSelectedDate}
-            startDate={customStartDate}
-            endDate={customEndDate}
-            onSelectSingleDate={(d) => {
-              setSingleSelectedDate(d);
+          {/* Payment Method Filter Dropdown (Lado direito, na frente) */}
+          <div className="relative">
+            <select
+              value={methodFilter}
+              onChange={(e) => setMethodFilter(e.target.value)}
+              className="px-3 py-1.5 rounded-2xl border border-blue-400/80 dark:border-blue-700 bg-white dark:bg-[#0e172a] text-xs font-bold text-slate-800 dark:text-slate-200 shadow-2xs focus:outline-none focus:border-[#2563eb] cursor-pointer transition-all hover:border-blue-500"
+              title="Filtrar por Forma de Pagamento"
+            >
+              <option value="all">💳 Pagamento</option>
+              <option value="money">Dinheiro</option>
+              <option value="pix">PIX</option>
+              <option value="debit">Cartão Débito</option>
+              <option value="credit">Cartão Crédito</option>
+              <option value="credit_account">Fiado</option>
+            </select>
+          </div>
+        </div>
+
+        {/* 3. ROW 2: Hoje, Mês, Calendário Tudo, Filtro Status */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {/* Hoje */}
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedQuickDate('today');
+              setSingleSelectedDate(undefined);
               setCustomStartDate(undefined);
               setCustomEndDate(undefined);
-              setSelectedQuickDate('all');
+              setShowCalendarDropdown(false);
             }}
-            onSelectRange={(start, end) => {
-              setCustomStartDate(start);
-              setCustomEndDate(end);
-              setSingleSelectedDate(undefined);
-              setSelectedQuickDate('all');
-            }}
-            onClear={() => {
+            className={`px-3.5 py-1.5 rounded-2xl text-xs font-black transition-all active:scale-95 ${
+              selectedQuickDate === 'today'
+                ? 'bg-[#2563eb] text-white shadow-xs'
+                : 'bg-white dark:bg-[#0e172a] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#1e2f52] hover:bg-slate-50'
+            }`}
+          >
+            Hoje
+          </button>
+
+          {/* Mês */}
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedQuickDate('month');
               setSingleSelectedDate(undefined);
               setCustomStartDate(undefined);
               setCustomEndDate(undefined);
-              setSelectedQuickDate('all');
+              setShowCalendarDropdown(false);
             }}
-          />
-        </div>
-
-        {/* Status Filter Dropdown [ 🌪️ ∨ ] */}
-        <div className="relative">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-2.5 py-1.5 rounded-2xl border border-slate-200 dark:border-[#1e2f52] bg-white dark:bg-[#0e172a] text-xs font-bold text-slate-700 dark:text-slate-300 shadow-2xs focus:outline-none focus:border-[#2563eb] cursor-pointer"
-            title="Filtrar por Status"
+            className={`px-3 py-1.5 rounded-2xl text-xs font-bold transition-all active:scale-95 ${
+              selectedQuickDate === 'month'
+                ? 'bg-[#2563eb] text-white shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+            }`}
           >
-            <option value="all">🌪️ Status</option>
-            <option value="completed">Efetivadas</option>
-            <option value="cancelled">Canceladas</option>
-            <option value="returned">Estornadas</option>
-          </select>
+            Mês
+          </button>
+
+          {/* Calendário Tudo Button with Interactive Dropdown Popover */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowCalendarDropdown((prev) => !prev)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-2xl border text-xs font-bold shadow-2xs transition-all active:scale-95 cursor-pointer ${
+                showCalendarDropdown || customDateLabel !== 'Tudo'
+                  ? 'border-blue-400 bg-blue-50/80 dark:bg-blue-950/40 text-[#2563eb] dark:text-blue-400'
+                  : 'border-slate-200 dark:border-[#1e2f52] bg-white dark:bg-[#0e172a] text-slate-700 dark:text-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              <Calendar className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+              <span>{customDateLabel}</span>
+              {showCalendarDropdown ? (
+                <ChevronUp className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 stroke-[2.5]" />
+              ) : (
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400 stroke-[2.5]" />
+              )}
+            </button>
+
+            <CalendarDropdownPopover
+              isOpen={showCalendarDropdown}
+              onClose={() => setShowCalendarDropdown(false)}
+              selectedDate={singleSelectedDate}
+              startDate={customStartDate}
+              endDate={customEndDate}
+              onSelectSingleDate={(d) => {
+                setSingleSelectedDate(d);
+                setCustomStartDate(undefined);
+                setCustomEndDate(undefined);
+                setSelectedQuickDate('all');
+              }}
+              onSelectRange={(start, end) => {
+                setCustomStartDate(start);
+                setCustomEndDate(end);
+                setSingleSelectedDate(undefined);
+                setSelectedQuickDate('all');
+              }}
+              onClear={() => {
+                setSingleSelectedDate(undefined);
+                setCustomStartDate(undefined);
+                setCustomEndDate(undefined);
+                setSelectedQuickDate('all');
+              }}
+            />
+          </div>
+
+          {/* Status Filter Dropdown [ 🌪️ ∨ ] */}
+          <div className="relative">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-2.5 py-1.5 rounded-2xl border border-slate-200 dark:border-[#1e2f52] bg-white dark:bg-[#0e172a] text-xs font-bold text-slate-700 dark:text-slate-300 shadow-2xs focus:outline-none focus:border-[#2563eb] cursor-pointer"
+              title="Filtrar por Status"
+            >
+              <option value="all">🌪️ Status</option>
+              <option value="completed">Efetivadas</option>
+              <option value="cancelled">Canceladas</option>
+              <option value="returned">Estornadas</option>
+            </select>
+          </div>
         </div>
 
-        {/* Payment Method Filter Dropdown [ 💳 ∨ ] */}
-        <div className="relative">
-          <select
-            value={methodFilter}
-            onChange={(e) => setMethodFilter(e.target.value)}
-            className="px-2.5 py-1.5 rounded-2xl border border-slate-200 dark:border-[#1e2f52] bg-white dark:bg-[#0e172a] text-xs font-bold text-slate-700 dark:text-slate-300 shadow-2xs focus:outline-none focus:border-[#2563eb] cursor-pointer"
-            title="Filtrar por Forma de Pagamento"
-          >
-            <option value="all">💳 Pagamento</option>
-            <option value="money">Dinheiro</option>
-            <option value="pix">PIX</option>
-            <option value="debit">Cartão Débito</option>
-            <option value="credit">Cartão Crédito</option>
-            <option value="credit_account">Fiado</option>
-          </select>
-        </div>
-      </div>
-
-      {/* ========================================================
-          4. ROW 3: Report Button [ 📄 ] & Search Input
-         ======================================================== */}
-      <div className="flex items-center gap-2">
-        {/* Report / Financial Summary Button */}
-        <button
-          type="button"
-          onClick={() => setShowSummaryModal(true)}
-          className="w-10 h-10 rounded-2xl border border-slate-200 dark:border-[#1e2f52] bg-white dark:bg-[#0e172a] hover:bg-slate-50 dark:hover:bg-[#131f38] text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 shadow-2xs transition-all active:scale-95"
-          title="Ver resumo financeiro das vendas"
-        >
-          <FileSpreadsheet className="w-4 h-4" />
-        </button>
-
-        {/* Search Input */}
-        <div className="relative flex-1">
+        {/* 4. ROW 3: Search Input */}
+        <div className="relative w-full">
           <Search className="absolute left-3.5 top-3 w-4 h-4 text-slate-400" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar cupom #, cliente..."
+            placeholder="Buscar por cupom #, cliente, produto, pagamento (pix, cartão) ou status..."
             className="w-full pl-9 pr-8 py-2 rounded-2xl border border-slate-200 dark:border-[#1e2f52] bg-slate-50/70 dark:bg-[#0e172a] text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:bg-white dark:focus:bg-[#131f38] focus:border-[#2563eb] shadow-2xs transition-colors"
           />
           {search && (
@@ -349,8 +310,9 @@ export const SalesHistoryPage: React.FC = () => {
       </div>
 
       {/* ========================================================
-          5. MAIN CARD: Empty State (Matches Screenshot) or Sales List
+          SCROLLABLE SALES LIST
          ======================================================== */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-5 py-3 space-y-2.5 pb-24 overscroll-contain">
       {filteredSales.length === 0 ? (
         <div className="rounded-3xl border border-slate-200 dark:border-[#1a2846] bg-white dark:bg-[#0e172a] p-10 sm:p-14 text-center min-h-[300px] flex flex-col items-center justify-center shadow-xs animate-in fade-in">
           {/* Outline Receipt Icon with Dollar Sign */}
@@ -477,6 +439,7 @@ export const SalesHistoryPage: React.FC = () => {
           ))}
         </div>
       )}
+      </div>
 
       {/* ========================================================
           MODALS

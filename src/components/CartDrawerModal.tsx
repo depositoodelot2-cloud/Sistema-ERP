@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ArrowRight,
   FileText,
@@ -8,6 +8,7 @@ import {
   ShoppingBag,
   Tag,
   Trash2,
+  TrendingUp,
   X,
 } from 'lucide-react';
 import { useCart } from '../hooks/useCart';
@@ -38,6 +39,8 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
     subtotal,
     discount,
     setDiscount,
+    surcharge,
+    setSurcharge,
     total,
     selectedCustomer,
     setSelectedCustomer,
@@ -46,22 +49,62 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showCustomerSelect, setShowCustomerSelect] = useState(false);
   const [showDiscountInput, setShowDiscountInput] = useState(false);
-  const [discountVal, setDiscountVal] = useState(discount > 0 ? discount.toString() : '');
+  const [discountVal, setDiscountVal] = useState<number>(discount || 0);
+  const [showSurchargeInput, setShowSurchargeInput] = useState(false);
+  const [surchargeVal, setSurchargeVal] = useState<number>(surcharge || 0);
+
+  useEffect(() => {
+    setDiscountVal(discount || 0);
+  }, [discount]);
+
+  useEffect(() => {
+    setSurchargeVal(surcharge || 0);
+  }, [surcharge]);
 
   if (!isOpen) return null;
 
   const totalProductsCount = items.length;
 
+  const handleDiscountInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawDigits = e.target.value.replace(/\D/g, '');
+    if (!rawDigits) {
+      setDiscountVal(0);
+      return;
+    }
+    const numeric = parseInt(rawDigits, 10) / 100;
+    setDiscountVal(numeric);
+  };
+
   const handleApplyDiscount = () => {
-    const val = parseFloat(discountVal.replace(',', '.')) || 0;
-    setDiscount(Math.max(0, Math.min(val, subtotal)));
+    setDiscount(Math.max(0, Math.min(discountVal, subtotal)));
     setShowDiscountInput(false);
   };
 
   const handleRemoveDiscount = () => {
     setDiscount(0);
-    setDiscountVal('');
+    setDiscountVal(0);
     setShowDiscountInput(false);
+  };
+
+  const handleSurchargeInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawDigits = e.target.value.replace(/\D/g, '');
+    if (!rawDigits) {
+      setSurchargeVal(0);
+      return;
+    }
+    const numeric = parseInt(rawDigits, 10) / 100;
+    setSurchargeVal(numeric);
+  };
+
+  const handleApplySurcharge = () => {
+    setSurcharge(Math.max(0, surchargeVal));
+    setShowSurchargeInput(false);
+  };
+
+  const handleRemoveSurcharge = () => {
+    setSurcharge(0);
+    setSurchargeVal(0);
+    setShowSurchargeInput(false);
   };
 
   const customerDisplayName = selectedCustomer
@@ -251,17 +294,28 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
               </span>
             </div>
 
-            {/* Discount row / + Adicionar Desconto */}
-            <div>
-              {discount > 0 ? (
+            {/* Discount & Surcharge rows */}
+            <div className="space-y-2">
+              {/* Desconto Aplicado */}
+              {discount > 0 && (
                 <div className="flex justify-between items-center text-xs">
                   <div className="flex items-center gap-1.5 text-emerald-600 font-bold">
                     <Tag className="w-3.5 h-3.5" />
                     <span>Desconto aplicado:</span>
                     <button
                       type="button"
+                      onClick={() => {
+                        setDiscountVal(discount);
+                        setShowDiscountInput(true);
+                      }}
+                      className="text-[10px] text-emerald-700 underline ml-1 hover:text-emerald-900 cursor-pointer"
+                    >
+                      editar
+                    </button>
+                    <button
+                      type="button"
                       onClick={handleRemoveDiscount}
-                      className="text-[10px] text-rose-500 underline ml-1 hover:text-rose-700"
+                      className="text-[10px] text-rose-500 underline ml-1 hover:text-rose-700 cursor-pointer"
                     >
                       remover
                     </button>
@@ -270,42 +324,148 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
                     -{formatCurrency(discount)}
                   </span>
                 </div>
-              ) : showDiscountInput ? (
+              )}
+
+              {/* Input de Desconto */}
+              {showDiscountInput && (
                 <div className="flex items-center gap-2 pt-1">
-                  <input
-                    type="number"
-                    step="0.01"
-                    placeholder="Valor em R$..."
-                    value={discountVal}
-                    onChange={(e) => setDiscountVal(e.target.value)}
-                    className="flex-1 px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-mono text-slate-900 focus:outline-none focus:border-orange-500"
-                    autoFocus
-                  />
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="R$ 0,00"
+                      value={discountVal > 0 ? formatCurrency(discountVal) : ''}
+                      onChange={handleDiscountInputChange}
+                      onFocus={(e) => e.target.select()}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleApplyDiscount();
+                        }
+                        if (e.key === 'Escape') setShowDiscountInput(false);
+                      }}
+                      className="w-full px-3 py-1.5 rounded-xl border border-orange-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 shadow-2xs"
+                      autoFocus
+                    />
+                  </div>
                   <button
                     type="button"
                     onClick={handleApplyDiscount}
-                    className="px-3 py-1.5 rounded-xl bg-orange-600 text-white font-bold text-xs"
+                    className="px-3 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs transition-colors cursor-pointer shrink-0 shadow-2xs"
                   >
                     Aplicar
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowDiscountInput(false)}
-                    className="p-1.5 text-slate-400 hover:text-slate-600"
+                    className="p-1.5 text-slate-400 hover:text-slate-600 cursor-pointer shrink-0"
+                    title="Cancelar"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setShowDiscountInput(true)}
-                  className="flex items-center gap-1.5 text-xs font-bold text-[#ea580c] hover:text-orange-700 transition-colors"
-                >
-                  <Tag className="w-3.5 h-3.5" />
-                  <span>+ Adicionar Desconto</span>
-                </button>
               )}
+
+              {/* Acréscimo Aplicado */}
+              {surcharge > 0 && (
+                <div className="flex justify-between items-center text-xs">
+                  <div className="flex items-center gap-1.5 text-[#2563eb] font-bold">
+                    <TrendingUp className="w-3.5 h-3.5" />
+                    <span>Acréscimo aplicado:</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSurchargeVal(surcharge);
+                        setShowSurchargeInput(true);
+                      }}
+                      className="text-[10px] text-blue-700 underline ml-1 hover:text-blue-900 cursor-pointer"
+                    >
+                      editar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRemoveSurcharge}
+                      className="text-[10px] text-rose-500 underline ml-1 hover:text-rose-700 cursor-pointer"
+                    >
+                      remover
+                    </button>
+                  </div>
+                  <span className="font-bold text-[#2563eb] font-mono">
+                    +{formatCurrency(surcharge)}
+                  </span>
+                </div>
+              )}
+
+              {/* Input de Acréscimo */}
+              {showSurchargeInput && (
+                <div className="flex items-center gap-2 pt-1">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="R$ 0,00"
+                      value={surchargeVal > 0 ? formatCurrency(surchargeVal) : ''}
+                      onChange={handleSurchargeInputChange}
+                      onFocus={(e) => e.target.select()}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleApplySurcharge();
+                        }
+                        if (e.key === 'Escape') setShowSurchargeInput(false);
+                      }}
+                      className="w-full px-3 py-1.5 rounded-xl border border-blue-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-2xs"
+                      autoFocus
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleApplySurcharge}
+                    className="px-3 py-1.5 rounded-xl bg-[#2563eb] hover:bg-blue-700 text-white font-bold text-xs transition-colors cursor-pointer shrink-0 shadow-2xs"
+                  >
+                    Aplicar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowSurchargeInput(false)}
+                    className="p-1.5 text-slate-400 hover:text-slate-600 cursor-pointer shrink-0"
+                    title="Cancelar"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
+              {/* Botões para Adicionar Desconto e Acréscimo */}
+              <div className="flex items-center gap-3 pt-0.5 flex-wrap">
+                {discount === 0 && !showDiscountInput && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDiscountVal(discount || 0);
+                      setShowDiscountInput(true);
+                    }}
+                    className="flex items-center gap-1.5 text-xs font-bold text-[#ea580c] hover:text-orange-700 transition-colors cursor-pointer"
+                  >
+                    <Tag className="w-3.5 h-3.5" />
+                    <span>+ Adicionar Desconto</span>
+                  </button>
+                )}
+
+                {surcharge === 0 && !showSurchargeInput && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSurchargeVal(surcharge || 0);
+                      setShowSurchargeInput(true);
+                    }}
+                    className="flex items-center gap-1.5 text-xs font-bold text-[#2563eb] hover:text-blue-700 transition-colors cursor-pointer"
+                  >
+                    <TrendingUp className="w-3.5 h-3.5" />
+                    <span>+ Adicionar Acréscimo</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="border-t border-slate-100 my-1" />

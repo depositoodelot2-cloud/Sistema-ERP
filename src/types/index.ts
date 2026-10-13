@@ -54,6 +54,7 @@ export interface Sale {
   items: SaleItem[];
   subtotal: number;
   discount: number;
+  surcharge?: number;
   total: number;
   paymentMethod: PaymentMethod;
   amountPaid?: number;
@@ -80,6 +81,7 @@ export interface Quote {
   items: SaleItem[];
   subtotal: number;
   discount: number;
+  surcharge?: number;
   total: number;
   customerId?: string;
   customerName?: string;

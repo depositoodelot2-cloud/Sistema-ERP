@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Check, Plus, Search, UserCheck, Users, X } from 'lucide-react';
 import { Customer } from '../types';
+import { filterAndRankCustomers } from '../utils/semanticSearch';
 import { getStoredCustomers, saveStoredCustomers } from '../utils/storage';
 import { CustomerFormModal } from './CustomerFormModal';
 
@@ -23,12 +24,7 @@ export const CustomerSelectModal: React.FC<CustomerSelectModalProps> = ({
 
   if (!isOpen) return null;
 
-  const filteredCustomers = customers.filter(
-    (c) =>
-      c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.document.includes(searchTerm) ||
-      c.phone.includes(searchTerm)
-  );
+  const filteredCustomers = filterAndRankCustomers(customers, searchTerm);
 
   const handleCreateCustomer = (data: Omit<Customer, 'id' | 'totalSpent' | 'purchasesCount' | 'createdAt'>) => {
     const newCustomer: Customer = {
@@ -80,7 +76,7 @@ export const CustomerSelectModal: React.FC<CustomerSelectModalProps> = ({
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar por nome, CPF ou telefone..."
+                placeholder="Buscar por nome, CPF/CNPJ, telefone ou cidade..."
                 className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:border-emerald-500"
                 autoFocus
               />

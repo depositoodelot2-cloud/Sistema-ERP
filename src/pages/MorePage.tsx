@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react';
 import {
   Building2,
   CheckCircle,
+  Cloud,
   Database,
   Download,
   Edit2,
   Plus,
   Printer,
+  RefreshCw,
   Save,
   Search,
   Shield,
@@ -18,6 +20,7 @@ import {
   Volume2,
   X,
 } from 'lucide-react';
+import { batchSyncAllToFirestore } from '../lib/firestoreSync';
 import { CategoryFormModal } from '../components/CategoryFormModal';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { CustomerFormModal } from '../components/CustomerFormModal';
@@ -26,6 +29,7 @@ import { UserFormModal } from '../components/UserFormModal';
 import { useAuth } from '../hooks/useAuth';
 import { Category, Customer, Operator, Sale, StoreSettings } from '../types';
 import { formatCurrency, formatDocument, formatPhone } from '../utils/formatters';
+import { filterAndRankCustomers } from '../utils/semanticSearch';
 import {
   getStoredCategories,
   getStoredCustomers,
@@ -42,7 +46,7 @@ import {
 } from '../utils/storage';
 
 export const MorePage: React.FC = () => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, currentOperator } = useAuth();
 
   // Active section tab: default is 'categories' as shown in the screenshot
   const [activeSection, setActiveSection] = useState<
@@ -301,16 +305,30 @@ export const MorePage: React.FC = () => {
     e.target.value = '';
   };
 
-  // Filtered customers
-  const filteredCustomers = customers.filter((c) => {
-    if (!customerSearch.trim()) return true;
-    const q = customerSearch.toLowerCase();
-    return (
-      c.name.toLowerCase().includes(q) ||
-      c.document.toLowerCase().includes(q) ||
-      c.phone.toLowerCase().includes(q)
-    );
-  });
+  const [isSyncingCloud, setIsSyncingCloud] = useState(false);
+
+  const handleSyncCloud = async () => {
+    setIsSyncingCloud(true);
+    try {
+      await batchSyncAllToFirestore({
+        products: getStoredProducts(),
+        categories: getStoredCategories(),
+        customers: getStoredCustomers(),
+        operators: getStoredOperators(),
+        sales: getStoredSales(),
+        settings: getStoredSettings(),
+      });
+      setBackupMessage('Nuvem Firebase Firestore sincronizada com sucesso!');
+    } catch {
+      setBackupMessage('Erro ao sincronizar com Firebase. Verifique a conexão.');
+    } finally {
+      setIsSyncingCloud(false);
+      setTimeout(() => setBackupMessage(null), 3500);
+    }
+  };
+
+  // Filtered customers with semantic, partial & intent matching
+  const filteredCustomers = filterAndRankCustomers(customers, customerSearch);
 
   // DB stats
   const totalProducts = getStoredProducts().length;
@@ -566,7 +584,7 @@ export const MorePage: React.FC = () => {
               type="text"
               value={customerSearch}
               onChange={(e) => setCustomerSearch(e.target.value)}
-              placeholder="Buscar por nome, documento ou telefone..."
+              placeholder="Buscar por nome, documento, telefone, cidade ou intenção..."
               className="w-full pl-10 pr-10 py-2.5 rounded-2xl border border-slate-200 dark:border-[#1a2846] bg-white dark:bg-[#0e172a] text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-[#2563eb] shadow-2xs"
             />
             {customerSearch && (
@@ -965,6 +983,40 @@ export const MorePage: React.FC = () => {
                 {categories.length} cadastradas
               </span>
             </div>
+          </div>
+
+          {/* Cloud Firebase Firestore Status */}
+          <div className="rounded-3xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/60 dark:bg-[#0c1830] p-4 shadow-xs space-y-3">
+            <div className="flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-2xl bg-[#2563eb] text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <Cloud className="w-5 h-5 stroke-[2.2]" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
+                      Google Cloud & Firebase Firestore
+                    </h3>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" title="Conectado" />
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                    Projeto: <span className="font-mono font-bold text-blue-600 dark:text-blue-400">gen-lang-client-0201148502</span>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleSyncCloud}
+                disabled={isSyncingCloud}
+                className="px-3.5 py-2 rounded-xl bg-[#2563eb] hover:bg-blue-600 disabled:opacity-60 text-white text-xs font-bold flex items-center gap-1.5 shrink-0 shadow-xs active:scale-95 transition-all cursor-pointer"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isSyncingCloud ? 'animate-spin' : ''}`} />
+                <span>{isSyncingCloud ? 'Sincronizando...' : 'Sincronizar Nuvem'}</span>
+              </button>
+            </div>
+            <p className="text-[11px] text-slate-600 dark:text-slate-300">
+              Banco de dados em nuvem ativo. As vendas, produtos, clientes e configurações são salvos e sincronizados com a nuvem Firestore.
+            </p>
           </div>
 
           {/* Backup Actions */}

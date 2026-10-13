@@ -11,11 +11,13 @@ import {
   Search,
   ShoppingCart,
   X,
+  ZoomIn,
 } from 'lucide-react';
 import { BarcodeScannerModal } from '../components/BarcodeScannerModal';
 import { CameraBarcodeScannerModal } from '../components/CameraBarcodeScannerModal';
 import { CartDrawerModal } from '../components/CartDrawerModal';
 import { CheckoutModal } from '../components/CheckoutModal';
+import { ProductImageZoomModal } from '../components/ProductImageZoomModal';
 import { QuoteModal } from '../components/QuoteModal';
 import { ReceiptModal } from '../components/ReceiptModal';
 import { ReturnModal } from '../components/ReturnModal';
@@ -23,6 +25,7 @@ import { SelectSaleForReturnModal } from '../components/SelectSaleForReturnModal
 import { useCart } from '../hooks/useCart';
 import { Category, Product, Sale } from '../types';
 import { formatCurrency } from '../utils/formatters';
+import { filterAndRankProducts } from '../utils/semanticSearch';
 import { getStoredCategories, getStoredProducts } from '../utils/storage';
 
 export const PDVPage: React.FC = () => {
@@ -53,6 +56,7 @@ export const PDVPage: React.FC = () => {
   const [completedSale, setCompletedSale] = useState<Sale | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
   const [scanAlert, setScanAlert] = useState<string | null>(null);
+  const [zoomedProduct, setZoomedProduct] = useState<Product | null>(null);
 
   // Sync storage
   useEffect(() => {
@@ -66,18 +70,9 @@ export const PDVPage: React.FC = () => {
     };
   }, []);
 
-  // Filter products
+  // Filter and rank products using semantic, partial & intent matching
   const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
-      const matchesCat = selectedCategory === 'all' || p.category === selectedCategory;
-      const cleanSearch = searchQuery.toLowerCase().trim();
-      const matchesSearch =
-        !cleanSearch ||
-        p.name.toLowerCase().includes(cleanSearch) ||
-        p.code.toLowerCase().includes(cleanSearch) ||
-        p.barcode.toLowerCase().includes(cleanSearch);
-      return matchesCat && matchesSearch;
-    });
+    return filterAndRankProducts(products, searchQuery, selectedCategory);
   }, [products, selectedCategory, searchQuery]);
 
   const handleBarcodeScanned = (scannedCode: string) => {
@@ -119,7 +114,7 @@ export const PDVPage: React.FC = () => {
   const topCartItem = lastActiveItem || items[0] || null;
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden bg-slate-100 dark:bg-[#050b16] text-slate-900 dark:text-white max-w-md md:max-w-xl mx-auto w-full select-none relative transition-colors">
+    <div className="flex-1 min-h-0 flex flex-col h-full overflow-hidden bg-slate-100 dark:bg-[#050b16] text-slate-900 dark:text-white max-w-md md:max-w-xl mx-auto w-full select-none relative transition-colors">
       
       {/* Scan alert banner */}
       {scanAlert && (
@@ -132,26 +127,26 @@ export const PDVPage: React.FC = () => {
       {/* ========================================================
           FIXED TOP AREA: STAYS FROZEN AT THE TOP AT ALL TIMES
          ======================================================== */}
-      <div className="shrink-0 px-3 pt-2 pb-2 bg-slate-100 dark:bg-[#050b16] z-20 space-y-2.5 transition-colors">
+      <div className="shrink-0 px-3 pt-2 pb-2 bg-slate-100 dark:bg-[#050b16] z-20 space-y-2.5 transition-colors border-b border-slate-200/60 dark:border-[#131f38] shadow-xs">
         
-        {/* 1. TOP ROW: Cart Summary Button & Green COBRAR Button */}
+        {/* 1. TOP ROW: Cart Summary Button & Green Vender Button (Equal size, compact) */}
         <div className="grid grid-cols-2 gap-2">
           
           {/* Left Card: Clickable Button to Open Cart */}
           <button
             type="button"
             onClick={() => setShowCartDrawer(true)}
-            className="bg-white dark:bg-[#0e172a] border border-slate-200 dark:border-[#1b2b4c] hover:border-[#2563eb] dark:hover:border-[#2563eb] active:scale-[0.98] transition-all rounded-2xl p-2.5 flex items-center gap-2.5 overflow-hidden text-left cursor-pointer group shadow-xs"
+            className="h-[50px] bg-white dark:bg-[#0e172a] border border-slate-200 dark:border-[#1b2b4c] hover:border-[#2563eb] dark:hover:border-[#2563eb] active:scale-[0.98] transition-all rounded-2xl px-2.5 flex items-center gap-2 overflow-hidden text-left cursor-pointer group shadow-xs"
             title="Clique para abrir o carrinho de compras"
           >
-            <div className="w-10 h-10 rounded-xl bg-[#2563eb] group-hover:bg-blue-500 text-white font-black text-base flex items-center justify-center shrink-0 shadow-xs transition-colors">
+            <div className="w-8 h-8 rounded-xl bg-[#2563eb] group-hover:bg-blue-500 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-xs transition-colors">
               {topCartItem ? topCartItem.quantity : 0}
             </div>
             <div className="min-w-0 flex-1">
-              <span className="text-xs font-black text-slate-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-200 uppercase block truncate leading-tight transition-colors">
+              <span className="text-[11px] font-black text-slate-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-200 uppercase block truncate leading-tight transition-colors">
                 {topCartItem ? topCartItem.product.name : 'SEM ITENS'}
               </span>
-              <div className="text-[11px] font-mono mt-0.5">
+              <div className="text-[10px] font-mono leading-tight mt-0.5">
                 <span className="text-[#2563eb] dark:text-[#3b82f6] font-bold">
                   {topCartItem ? formatCurrency(topCartItem.subtotal) : 'R$ 0,00'}
                 </span>
@@ -159,21 +154,19 @@ export const PDVPage: React.FC = () => {
             </div>
           </button>
 
-          {/* Right Button: COBRAR */}
+          {/* Right Button: Vender */}
           <button
             type="button"
             onClick={() => setShowCheckout(true)}
-            className="bg-[#00c076] hover:bg-[#00b06c] active:scale-98 text-white rounded-2xl px-3 py-2.5 flex items-center justify-center gap-2 shadow-lg shadow-[#00c076]/25 font-black text-xs sm:text-sm tracking-wider uppercase transition-all"
+            className="h-[50px] bg-[#059669] hover:bg-[#047857] active:scale-[0.98] text-white rounded-2xl px-3 flex flex-col items-center justify-center shadow-lg shadow-emerald-700/20 font-black transition-all cursor-pointer"
+            title="Finalizar e vender"
           >
-            <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs font-black">
-              $
+            <span className="text-sm sm:text-[15px] font-black tracking-wide leading-tight">
+              Vender
             </span>
-            <div className="flex flex-col items-start leading-none">
-              <span className="text-[11px] sm:text-xs">COBRAR</span>
-              <span className="text-[10px] sm:text-[11px] font-mono font-bold opacity-90 mt-0.5">
-                ({formatCurrency(total)})
-              </span>
-            </div>
+            <span className="text-xs sm:text-[13px] font-mono font-bold opacity-95 leading-tight mt-0.5">
+              {formatCurrency(total)}
+            </span>
           </button>
         </div>
 
@@ -187,7 +180,7 @@ export const PDVPage: React.FC = () => {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Buscar por nome, código..."
+              placeholder="Buscar por nome, código, barras ou intenção (ex: refri, tinta, zerado)..."
               className="w-full pl-9 pr-8 py-2 rounded-2xl bg-white dark:bg-[#0c1527] border border-slate-200 dark:border-[#1a2846] text-xs text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:border-[#2563eb] transition-all shadow-2xs"
             />
             {searchQuery && (
@@ -269,7 +262,7 @@ export const PDVPage: React.FC = () => {
 
           {/* Dropdown popup */}
           {showCategoryDropdown && (
-            <div className="absolute top-full left-0 right-0 mt-1 z-30 bg-white dark:bg-[#0e172a] border border-slate-200 dark:border-[#1e2f54] rounded-2xl shadow-2xl p-1.5 space-y-1 animate-in fade-in">
+            <div className="absolute top-full left-0 right-0 mt-1 z-30 bg-white dark:bg-[#0e172a] border border-slate-200 dark:border-[#1e2f54] rounded-2xl shadow-2xl p-1.5 space-y-1 animate-in fade-in max-h-60 overflow-y-auto">
               <button
                 type="button"
                 onClick={() => {
@@ -320,7 +313,7 @@ export const PDVPage: React.FC = () => {
       {/* ========================================================
           SCROLLABLE PRODUCTS AREA: ONLY THIS AREA SCROLLS!
          ======================================================== */}
-      <div className="flex-1 overflow-y-auto px-3 pb-24 pt-1 space-y-2 pr-1.5 scrollbar-thin">
+      <div className="flex-1 min-h-0 overflow-y-auto px-3 pb-28 pt-2 space-y-2 pr-1.5 scrollbar-thin overscroll-contain">
         {filteredProducts.length === 0 ? (
           <div className="py-16 text-center text-slate-500">
             <Package className="w-12 h-12 mx-auto mb-2 opacity-30" />
@@ -340,18 +333,34 @@ export const PDVPage: React.FC = () => {
                     : 'bg-white dark:bg-[#0c1527] border border-slate-200 dark:border-[#16233d] hover:border-slate-300 dark:hover:border-[#22355c] shadow-2xs'
                 }`}
               >
-                {/* Left Badge or Photo */}
-                {isInCart ? (
-                  <div className="w-11 h-11 rounded-xl bg-[#2563eb] text-white font-black text-sm flex items-center justify-center shrink-0 shadow-xs">
-                    {inCartQty}x
-                  </div>
-                ) : product.imageUrl ? (
-                  <div className="w-11 h-11 rounded-xl overflow-hidden bg-slate-100 dark:bg-[#111d38] border border-slate-200 dark:border-[#1e3058] shrink-0">
+                {/* Left Badge or Photo with Zoom on Click */}
+                {product.imageUrl ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setZoomedProduct(product);
+                    }}
+                    className="relative w-12 h-12 rounded-xl overflow-hidden bg-slate-100 dark:bg-[#111d38] border border-slate-200 dark:border-[#1e3058] shrink-0 hover:border-blue-500 transition-all cursor-zoom-in group active:scale-95 shadow-2xs"
+                    title="Clique para ampliar a imagem do produto"
+                  >
                     <img
                       src={product.imageUrl}
                       alt={product.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
                     />
+                    <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white">
+                      <ZoomIn className="w-4 h-4 stroke-[2.5]" />
+                    </div>
+                    {isInCart && (
+                      <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-[#2563eb] text-white text-[10px] font-black flex items-center justify-center shadow-xs border border-white dark:border-[#0c1527]">
+                        {inCartQty}x
+                      </span>
+                    )}
+                  </button>
+                ) : isInCart ? (
+                  <div className="w-11 h-11 rounded-xl bg-[#2563eb] text-white font-black text-sm flex items-center justify-center shrink-0 shadow-xs">
+                    {inCartQty}x
                   </div>
                 ) : (
                   <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-[#111d38] border border-slate-200 dark:border-[#1e3058] text-slate-500 dark:text-slate-400 font-mono text-[10px] font-bold flex items-center justify-center shrink-0">
@@ -430,6 +439,28 @@ export const PDVPage: React.FC = () => {
                       : 'bg-white dark:bg-[#0c1527] border border-slate-200 dark:border-[#16233d] shadow-2xs'
                   }`}
                 >
+                  {/* Grid Product Image if available */}
+                  {product.imageUrl && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setZoomedProduct(product);
+                      }}
+                      className="relative w-full aspect-16/10 mb-2 rounded-xl overflow-hidden bg-slate-100 dark:bg-[#111d38] border border-slate-200 dark:border-[#1e3058] cursor-zoom-in group active:scale-95 transition-transform"
+                      title="Clique para ampliar a foto do produto"
+                    >
+                      <img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white">
+                        <ZoomIn className="w-4 h-4 stroke-[2.5]" />
+                      </div>
+                    </button>
+                  )}
+
                   <div>
                     <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono mb-1">
                       <span>##{product.code}</span>
@@ -543,6 +574,14 @@ export const PDVPage: React.FC = () => {
         isOpen={showCameraScanner}
         onClose={() => setShowCameraScanner(false)}
         onDetected={handleBarcodeScanned}
+      />
+
+      {/* Product Image Zoom Modal */}
+      <ProductImageZoomModal
+        isOpen={Boolean(zoomedProduct)}
+        product={zoomedProduct}
+        onClose={() => setZoomedProduct(null)}
+        onAddToCart={(p) => addItem(p, 1)}
       />
     </div>
   );

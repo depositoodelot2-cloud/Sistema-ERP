@@ -1,0 +1,140 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "Product item in inventory",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique product ID" },
+        "code": { "type": "string", "description": "Internal product code" },
+        "barcode": { "type": "string", "description": "EAN or custom barcode" },
+        "name": { "type": "string", "description": "Product title/name" },
+        "description": { "type": "string", "description": "Product description" },
+        "category": { "type": "string", "description": "Category name or ID" },
+        "costPrice": { "type": "number", "description": "Wholesale / purchase cost" },
+        "sellPrice": { "type": "number", "description": "Retail sale price" },
+        "stock": { "type": "number", "description": "Current stock count" },
+        "minStock": { "type": "number", "description": "Minimum warning stock" },
+        "unit": { "type": "string", "description": "Unit of measurement (un, kg, etc.)" },
+        "imageUrl": { "type": "string", "description": "Optional image URL" },
+        "createdAt": { "type": "string", "description": "ISO date string created" },
+        "updatedAt": { "type": "string", "description": "ISO date string updated" }
+      },
+      "required": ["id", "name", "costPrice", "sellPrice", "stock", "unit"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Product category grouping",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique category ID" },
+        "name": { "type": "string", "description": "Category name" },
+        "color": { "type": "string", "description": "Hex color code" },
+        "icon": { "type": "string", "description": "Optional icon identifier" }
+      },
+      "required": ["id", "name", "color"]
+    },
+    "Customer": {
+      "title": "Customer",
+      "description": "Customer entity for credit accounts and sales records",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique customer ID" },
+        "name": { "type": "string", "description": "Customer name" },
+        "document": { "type": "string", "description": "CPF or CNPJ" },
+        "phone": { "type": "string", "description": "Phone or WhatsApp" },
+        "email": { "type": "string", "description": "Email address" },
+        "address": { "type": "string", "description": "Delivery address" },
+        "notes": { "type": "string", "description": "Notes" },
+        "totalSpent": { "type": "number", "description": "Lifetime total spent" },
+        "purchasesCount": { "type": "number", "description": "Total completed orders" },
+        "creditLimit": { "type": "number", "description": "Max credit for tab accounts" },
+        "outstandingBalance": { "type": "number", "description": "Current outstanding debt" },
+        "createdAt": { "type": "string", "description": "Registration date" }
+      },
+      "required": ["id", "name"]
+    },
+    "Sale": {
+      "title": "Sale",
+      "description": "Completed or recorded point-of-sale transaction",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Sale ID" },
+        "code": { "type": "string", "description": "Voucher or invoice code (e.g., VND-1001)" },
+        "items": { "type": "array", "description": "List of sold items" },
+        "subtotal": { "type": "number", "description": "Pre-discount subtotal" },
+        "discount": { "type": "number", "description": "Applied discount" },
+        "total": { "type": "number", "description": "Final paid total" },
+        "paymentMethod": { "type": "string", "description": "Method of payment" },
+        "amountPaid": { "type": "number", "description": "Tendered amount" },
+        "change": { "type": "number", "description": "Change returned" },
+        "customerId": { "type": "string", "description": "Optional customer ID" },
+        "customerName": { "type": "string", "description": "Optional customer name" },
+        "operatorId": { "type": "string", "description": "Operator ID" },
+        "operatorName": { "type": "string", "description": "Operator name" },
+        "date": { "type": "string", "description": "ISO timestamp of transaction" },
+        "status": { "type": "string", "description": "completed, cancelled, refunded" },
+        "notes": { "type": "string", "description": "Optional notes" }
+      },
+      "required": ["id", "code", "subtotal", "total", "paymentMethod", "operatorName", "date", "status"]
+    },
+    "Operator": {
+      "title": "Operator",
+      "description": "Cashier or manager user profile",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Operator ID" },
+        "name": { "type": "string", "description": "Display name" },
+        "role": { "type": "string", "description": "admin, cashier, manager" },
+        "pin": { "type": "string", "description": "Security PIN" },
+        "active": { "type": "boolean", "description": "Active state" }
+      },
+      "required": ["id", "name", "role", "pin", "active"]
+    },
+    "StoreSettings": {
+      "title": "StoreSettings",
+      "description": "Store profile and receipt printer configuration",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Store name" },
+        "tradingName": { "type": "string", "description": "Legal business name" },
+        "document": { "type": "string", "description": "CNPJ / Tax ID" },
+        "phone": { "type": "string", "description": "Phone number" },
+        "address": { "type": "string", "description": "Physical address" },
+        "cityState": { "type": "string", "description": "City and State" },
+        "receiptFooter": { "type": "string", "description": "Receipt footer message" },
+        "pixKey": { "type": "string", "description": "PIX key for payment" },
+        "pixKeyType": { "type": "string", "description": "PIX key type" },
+        "enableSound": { "type": "boolean", "description": "Beep on scan" },
+        "printerWidth": { "type": "string", "description": "58mm or 80mm" }
+      },
+      "required": ["name", "document"]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Collection of inventory products"
+    },
+    "/categories/{categoryId}": {
+      "schema": { "$ref": "#/entities/Category" },
+      "description": "Collection of product categories"
+    },
+    "/customers/{customerId}": {
+      "schema": { "$ref": "#/entities/Customer" },
+      "description": "Collection of registered customers"
+    },
+    "/sales/{saleId}": {
+      "schema": { "$ref": "#/entities/Sale" },
+      "description": "Collection of point-of-sale transactions"
+    },
+    "/operators/{operatorId}": {
+      "schema": { "$ref": "#/entities/Operator" },
+      "description": "Collection of store operators"
+    },
+    "/settings/{settingsId}": {
+      "schema": { "$ref": "#/entities/StoreSettings" },
+      "description": "Store configuration and printer settings"
+    }
+  }
+}

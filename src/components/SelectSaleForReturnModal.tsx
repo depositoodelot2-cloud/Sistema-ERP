@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { History, RotateCcw, Search, X } from 'lucide-react';
 import { Sale } from '../types';
 import { formatCurrency, formatDateTime } from '../utils/formatters';
+import { filterAndRankSales } from '../utils/semanticSearch';
 import { getStoredSales } from '../utils/storage';
 
 interface SelectSaleForReturnModalProps {
@@ -20,18 +21,9 @@ export const SelectSaleForReturnModal: React.FC<SelectSaleForReturnModalProps> =
 
   if (!isOpen) return null;
 
-  // Filter completed sales for return
-  const eligibleSales = sales
-    .filter((s) => s.status !== 'cancelled')
-    .filter((s) => {
-      const clean = searchTerm.toLowerCase().trim();
-      if (!clean) return true;
-      return (
-        s.code.toLowerCase().includes(clean) ||
-        (s.customerName && s.customerName.toLowerCase().includes(clean)) ||
-        s.items.some((item) => item.productName.toLowerCase().includes(clean))
-      );
-    });
+  // Filter completed sales for return with semantic, partial & item search
+  const nonCancelledSales = sales.filter((s) => s.status !== 'cancelled');
+  const eligibleSales = filterAndRankSales(nonCancelledSales, searchTerm);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-xs animate-in fade-in duration-150">
@@ -69,7 +61,7 @@ export const SelectSaleForReturnModal: React.FC<SelectSaleForReturnModalProps> =
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar por número do cupom (#VND-...), cliente ou item..."
+            placeholder="Buscar por cupom (#VND-...), cliente, produto ou intenção..."
             className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-[#091122] border border-[#1b2d50] text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
             autoFocus
           />

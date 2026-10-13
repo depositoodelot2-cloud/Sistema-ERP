@@ -151,6 +151,12 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                 <span className="font-mono">-{formatCurrency(sale.discount)}</span>
               </div>
             )}
+            {sale.surcharge !== undefined && sale.surcharge > 0 && (
+              <div className="flex justify-between text-teal-600 dark:text-teal-400 font-semibold">
+                <span>Acréscimo:</span>
+                <span className="font-mono">+{formatCurrency(sale.surcharge)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-base font-black text-slate-900 dark:text-slate-100 pt-1.5 border-t border-emerald-200/50 dark:border-emerald-800/60">
               <span>Total Pago:</span>
               <span className="font-mono text-emerald-600 dark:text-emerald-400">

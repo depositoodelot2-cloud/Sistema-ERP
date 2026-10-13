@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Barcode,
   Camera,
@@ -7,12 +7,14 @@ import {
   Plus,
   Upload,
   X,
+  ZoomIn,
 } from 'lucide-react';
 import { Category, Product, UnitType } from '../types';
 import { getStoredCategories, saveStoredCategories } from '../utils/storage';
 import { CameraBarcodeScannerModal } from './CameraBarcodeScannerModal';
 import { CameraCaptureModal } from './CameraCaptureModal';
-import { formatCurrency } from '../utils/formatters';
+import { ProductImageZoomModal } from './ProductImageZoomModal';
+import { formatCurrency, formatTitleCase } from '../utils/formatters';
 
 interface ProductFormModalProps {
   isOpen: boolean;
@@ -41,12 +43,48 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   const [category, setCategory] = useState(
     initialProduct?.category || categories[0]?.id || ''
   );
-  const [costPrice, setCostPrice] = useState(initialProduct?.costPrice || 0);
-  const [sellPrice, setSellPrice] = useState(initialProduct?.sellPrice || 0);
+  const [costPrice, setCostPrice] = useState<number | null>(
+    initialProduct && initialProduct.costPrice > 0 ? initialProduct.costPrice : null
+  );
+  const [sellPrice, setSellPrice] = useState<number | null>(
+    initialProduct && initialProduct.sellPrice > 0 ? initialProduct.sellPrice : null
+  );
   const [stock, setStock] = useState<number>(initialProduct ? initialProduct.stock : 1);
   const [minStock, setMinStock] = useState<number>(initialProduct ? initialProduct.minStock : 1);
   const [unit, setUnit] = useState<UnitType>(initialProduct?.unit || 'un');
   const [imageUrl, setImageUrl] = useState(initialProduct?.imageUrl || '');
+  const [showImageZoom, setShowImageZoom] = useState(false);
+
+  // Reset form when modal opens or initialProduct changes
+  useEffect(() => {
+    if (isOpen) {
+      if (initialProduct) {
+        setCode(initialProduct.code || Math.floor(10000 + Math.random() * 90000).toString());
+        setBarcode(initialProduct.barcode || '');
+        setName(initialProduct.name || '');
+        setCategory(initialProduct.category || categories[0]?.id || '');
+        setCostPrice(initialProduct.costPrice > 0 ? initialProduct.costPrice : null);
+        setSellPrice(initialProduct.sellPrice > 0 ? initialProduct.sellPrice : null);
+        setStock(initialProduct.stock ?? 1);
+        setMinStock(initialProduct.minStock ?? 1);
+        setUnit(initialProduct.unit || 'un');
+        setImageUrl(initialProduct.imageUrl || '');
+      } else {
+        // Novo Produto: nome, preço de venda e preço de custo começam totalmente limpos
+        setCode(Math.floor(10000 + Math.random() * 90000).toString());
+        setBarcode('');
+        setName('');
+        setCategory(categories[0]?.id || '');
+        setCostPrice(null);
+        setSellPrice(null);
+        setStock(1);
+        setMinStock(1);
+        setUnit('un');
+        setImageUrl('');
+      }
+      setError('');
+    }
+  }, [isOpen, initialProduct]);
 
   // Modals & sub-flows
   const [showCameraCapture, setShowCameraCapture] = useState(false);
@@ -73,7 +111,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
   const handleCreateCategory = (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanName = newCatName.trim();
+    const cleanName = formatTitleCase(newCatName.trim());
     if (!cleanName) return;
 
     const newCat: Category = {
@@ -91,18 +129,36 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
     setShowNewCategoryModal(false);
   };
 
-  const handlePriceChange = (setter: (val: number) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const cursor = input.selectionStart;
+    const formatted = formatTitleCase(input.value);
+    setName(formatted);
+    if (cursor !== null) {
+      requestAnimationFrame(() => {
+        input.setSelectionRange(cursor, cursor);
+      });
+    }
+  };
+
+  const handlePriceChange = (setter: (val: number | null) => void) => (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawDigits = e.target.value.replace(/\D/g, '');
-    const numeric = rawDigits ? parseInt(rawDigits, 10) / 100 : 0;
+    if (!rawDigits) {
+      setter(null);
+      return;
+    }
+    const numeric = parseInt(rawDigits, 10) / 100;
     setter(numeric);
   };
 
-  const profitValue = Math.max(0, sellPrice - costPrice);
-  const marginPercent = sellPrice > 0 ? ((sellPrice - costPrice) / sellPrice) * 100 : 0;
+  const currentSell = sellPrice ?? 0;
+  const currentCost = costPrice ?? 0;
+  const profitValue = Math.max(0, currentSell - currentCost);
+  const marginPercent = currentSell > 0 ? ((currentSell - currentCost) / currentSell) * 100 : 0;
   const markupPercent =
-    costPrice > 0
-      ? ((sellPrice - costPrice) / costPrice) * 100
-      : sellPrice > 0
+    currentCost > 0
+      ? ((currentSell - currentCost) / currentCost) * 100
+      : currentSell > 0
       ? 100
       : 0;
 
@@ -112,7 +168,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
       setError('O nome do produto é obrigatório.');
       return;
     }
-    if (sellPrice <= 0) {
+    if (currentSell <= 0) {
       setError('O preço de venda deve ser maior que zero.');
       return;
     }
@@ -120,11 +176,11 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
     onSave({
       code: code.trim().replace(/^#/, ''),
       barcode: barcode.trim(),
-      name: name.trim(),
+      name: formatTitleCase(name.trim()),
       description: initialProduct?.description || '',
       category: category || categories[0]?.id || '',
-      costPrice,
-      sellPrice,
+      costPrice: currentCost,
+      sellPrice: currentSell,
       stock: Math.max(0, stock),
       minStock: Math.max(0, minStock),
       unit,
@@ -181,18 +237,28 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 2. IMAGE CONTROLS ROW: Preview, Camera, Upload, Link URL
                ======================================================== */}
             <div className="flex items-center gap-2">
-              {/* Preview / Default placeholder */}
-              <div className="w-12 h-12 rounded-2xl border border-blue-200 bg-[#f0f4ff] flex items-center justify-center overflow-hidden shrink-0">
-                {imageUrl ? (
+              {/* Preview with Click to Zoom / Default placeholder */}
+              {imageUrl ? (
+                <button
+                  type="button"
+                  onClick={() => setShowImageZoom(true)}
+                  className="relative w-12 h-12 rounded-2xl border border-blue-200 bg-[#f0f4ff] flex items-center justify-center overflow-hidden shrink-0 cursor-zoom-in group active:scale-95 transition-all shadow-2xs"
+                  title="Clique para ampliar a imagem do produto"
+                >
                   <img
                     src={imageUrl}
                     alt="Preview"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-transform group-hover:scale-105"
                   />
-                ) : (
+                  <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white">
+                    <ZoomIn className="w-4 h-4 stroke-[2.5]" />
+                  </div>
+                </button>
+              ) : (
+                <div className="w-12 h-12 rounded-2xl border border-blue-200 bg-[#f0f4ff] flex items-center justify-center overflow-hidden shrink-0">
                   <Camera className="w-5 h-5 text-blue-400" />
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Camera Button (Orange) */}
               <button
@@ -280,10 +346,11 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
               <input
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="EX: LÁPIS PED IRWIN, CIMENTO CP-II..."
-                className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal uppercase focus:outline-none focus:border-[#2563eb]"
+                onChange={handleNameChange}
+                placeholder="Ex: Lápis Ped Irwin, Cimento Cp-II..."
+                className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:border-[#2563eb]"
                 required
+                autoFocus={!initialProduct}
               />
             </div>
 
@@ -298,7 +365,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 <input
                   type="text"
                   inputMode="numeric"
-                  value={formatCurrency(sellPrice)}
+                  value={sellPrice !== null && sellPrice > 0 ? formatCurrency(sellPrice) : ''}
                   onChange={handlePriceChange(setSellPrice)}
                   placeholder="R$ 0,00"
                   className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-white text-xs sm:text-sm font-black font-mono text-slate-900 focus:outline-none focus:border-[#2563eb] shadow-2xs"
@@ -312,7 +379,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 <input
                   type="text"
                   inputMode="numeric"
-                  value={formatCurrency(costPrice)}
+                  value={costPrice !== null && costPrice > 0 ? formatCurrency(costPrice) : ''}
                   onChange={handlePriceChange(setCostPrice)}
                   placeholder="R$ 0,00"
                   className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-white text-xs sm:text-sm font-black font-mono text-slate-900 focus:outline-none focus:border-[#2563eb] shadow-2xs"
@@ -565,7 +632,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 <input
                   type="text"
                   value={newCatName}
-                  onChange={(e) => setNewCatName(e.target.value)}
+                  onChange={(e) => setNewCatName(formatTitleCase(e.target.value))}
                   placeholder="Ex: Tintas, Elétrica..."
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#2563eb]"
                   autoFocus
@@ -624,6 +691,15 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
         isOpen={showBarcodeScanner}
         onClose={() => setShowBarcodeScanner(false)}
         onDetected={(scanned) => setBarcode(scanned)}
+      />
+
+      {/* Product Image Zoom Modal */}
+      <ProductImageZoomModal
+        isOpen={showImageZoom}
+        onClose={() => setShowImageZoom(false)}
+        imageSrc={imageUrl}
+        title={name || 'Foto do Produto'}
+        subtitle={code ? `#${code}` : undefined}
       />
     </>
   );

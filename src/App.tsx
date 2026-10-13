@@ -11,14 +11,17 @@ import { MorePage } from './pages/MorePage';
 import { PDVPage } from './pages/PDVPage';
 import { SalesHistoryPage } from './pages/SalesHistoryPage';
 
+import { useFirestoreSync } from './hooks/useFirestoreSync';
+
 function AppContent() {
+  useFirestoreSync();
   const [currentTab, setCurrentTab] = useState<NavTab>('pdv');
 
   return (
     <div className="h-screen h-[100dvh] flex flex-col bg-slate-100 dark:bg-[#050b16] text-slate-900 dark:text-white selection:bg-[#2563eb] selection:text-white overflow-hidden transition-colors">
-      <Header />
+      {currentTab === 'pdv' && <Header currentTab={currentTab} />}
 
-      <main className="flex-1 flex flex-col overflow-hidden relative">
+      <main className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
         {currentTab === 'inicio' && (
           <DashboardPage onNavigateToInventory={() => setCurrentTab('inventory')} />
         )}

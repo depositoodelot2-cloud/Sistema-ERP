@@ -109,6 +109,12 @@ export const PrintReceiptView: React.FC<PrintReceiptViewProps> = ({ sale, settin
             <span>-{formatCurrency(sale.discount)}</span>
           </div>
         )}
+        {sale.surcharge !== undefined && sale.surcharge > 0 && (
+          <div className="flex justify-between text-black/80">
+            <span>ACRÉSCIMO:</span>
+            <span>+{formatCurrency(sale.surcharge)}</span>
+          </div>
+        )}
         <div className="flex justify-between text-sm font-black pt-1 border-t border-black/20">
           <span>TOTAL:</span>
           <span>{formatCurrency(sale.total)}</span>

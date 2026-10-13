@@ -1,4 +1,5 @@
 import { Category, Customer, Operator, Product, Quote, ReturnRecord, Sale, StoreSettings } from '../types';
+import { batchSyncAllToFirestore, saveSettingsToFirestore } from '../lib/firestoreSync';
 
 const STORAGE_KEYS = {
   PRODUCTS: 'odelot_pdv_products_v3',
@@ -92,6 +93,7 @@ export const getStoredProducts = (): Product[] => {
 export const saveStoredProducts = (products: Product[]) => {
   localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
   window.dispatchEvent(new Event('odelot_products_changed'));
+  batchSyncAllToFirestore({ products }).catch((e) => console.warn('Firestore sync products:', e));
 };
 
 export const getStoredCategories = (): Category[] => {
@@ -110,6 +112,7 @@ export const getStoredCategories = (): Category[] => {
 export const saveStoredCategories = (categories: Category[]) => {
   localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories));
   window.dispatchEvent(new Event('odelot_categories_changed'));
+  batchSyncAllToFirestore({ categories }).catch((e) => console.warn('Firestore sync categories:', e));
 };
 
 export const getStoredSales = (): Sale[] => {
@@ -127,6 +130,7 @@ export const getStoredSales = (): Sale[] => {
 export const saveStoredSales = (sales: Sale[]) => {
   localStorage.setItem(STORAGE_KEYS.SALES, JSON.stringify(sales));
   window.dispatchEvent(new Event('odelot_sales_changed'));
+  batchSyncAllToFirestore({ sales }).catch((e) => console.warn('Firestore sync sales:', e));
 };
 
 export const addSaleRecord = (sale: Sale) => {
@@ -196,6 +200,7 @@ export const getStoredCustomers = (): Customer[] => {
 export const saveStoredCustomers = (customers: Customer[]) => {
   localStorage.setItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify(customers));
   window.dispatchEvent(new Event('odelot_customers_changed'));
+  batchSyncAllToFirestore({ customers }).catch((e) => console.warn('Firestore sync customers:', e));
 };
 
 export const getStoredOperators = (): Operator[] => {
@@ -214,6 +219,7 @@ export const getStoredOperators = (): Operator[] => {
 export const saveStoredOperators = (operators: Operator[]) => {
   localStorage.setItem(STORAGE_KEYS.OPERATORS, JSON.stringify(operators));
   window.dispatchEvent(new Event('odelot_operators_changed'));
+  batchSyncAllToFirestore({ operators }).catch((e) => console.warn('Firestore sync operators:', e));
 };
 
 export const getCurrentOperator = (): Operator => {
@@ -267,6 +273,7 @@ export const getStoredSettings = (): StoreSettings => {
 export const saveStoredSettings = (settings: StoreSettings) => {
   localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
   window.dispatchEvent(new Event('odelot_settings_changed'));
+  saveSettingsToFirestore(settings).catch((e) => console.warn('Firestore sync settings:', e));
 };
 
 export const seedSampleData = () => {

@@ -12,6 +12,8 @@ interface CartContextType {
   setItemDiscount: (productId: string, discount: number) => void;
   discount: number;
   setDiscount: (discount: number) => void;
+  surcharge: number;
+  setSurcharge: (surcharge: number) => void;
   selectedCustomer: Customer | null;
   setSelectedCustomer: (customer: Customer | null) => void;
   notes: string;
@@ -47,6 +49,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   const [discount, setDiscount] = useState<number>(0);
+  const [surcharge, setSurcharge] = useState<number>(0);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [notes, setNotes] = useState<string>('');
 
@@ -145,6 +148,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setItems([]);
     setLastActiveItem(null);
     setDiscount(0);
+    setSurcharge(0);
     setSelectedCustomer(null);
     setNotes('');
   };
@@ -164,9 +168,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [items]);
 
   const total = useMemo(() => {
-    const rawTotal = subtotal - itemsTotalDiscount - (discount || 0);
+    const rawTotal = subtotal - itemsTotalDiscount - (discount || 0) + (surcharge || 0);
     return Math.max(0, rawTotal);
-  }, [subtotal, itemsTotalDiscount, discount]);
+  }, [subtotal, itemsTotalDiscount, discount, surcharge]);
 
   const totalItems = useMemo(() => {
     return items.reduce((acc, item) => acc + item.quantity, 0);
@@ -183,6 +187,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setItemDiscount,
         discount,
         setDiscount,
+        surcharge,
+        setSurcharge,
         selectedCustomer,
         setSelectedCustomer,
         notes,
