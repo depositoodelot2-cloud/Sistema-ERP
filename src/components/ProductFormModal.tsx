@@ -15,6 +15,7 @@ import { CameraBarcodeScannerModal } from './CameraBarcodeScannerModal';
 import { CameraCaptureModal } from './CameraCaptureModal';
 import { ProductImageZoomModal } from './ProductImageZoomModal';
 import { formatCurrency, formatTitleCase } from '../utils/formatters';
+import { playScannerBeep, validateBarcode } from '../utils/barcodeValidator';
 
 interface ProductFormModalProps {
   isOpen: boolean;
@@ -566,6 +567,17 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   type="text"
                   value={barcode}
                   onChange={(e) => setBarcode(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const val = validateBarcode(barcode);
+                      if (val.cleaned) {
+                        setBarcode(val.cleaned);
+                        playScannerBeep();
+                        if (navigator.vibrate) navigator.vibrate(60);
+                      }
+                    }
+                  }}
                   placeholder="7896541364845"
                   className="flex-1 min-w-0 bg-transparent text-xs font-bold font-mono text-slate-900 focus:outline-none"
                 />
