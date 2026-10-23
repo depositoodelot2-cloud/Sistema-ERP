@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Shield, UserPlus, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Eye, EyeOff, Shield, UserPlus, X } from 'lucide-react';
 import { Operator } from '../types';
 
 interface UserFormModalProps {
@@ -20,14 +20,30 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
     initialOperator?.role || 'cashier'
   );
   const [pin, setPin] = useState(initialOperator?.pin || '');
+  const [showPin, setShowPin] = useState(false);
   const [error, setError] = useState('');
+
+  // Sync state whenever initialOperator changes or modal opens
+  useEffect(() => {
+    if (initialOperator) {
+      setName(initialOperator.name || '');
+      setRole(initialOperator.role || 'cashier');
+      setPin(initialOperator.pin || '');
+    } else {
+      setName('');
+      setRole('cashier');
+      setPin('');
+    }
+    setError('');
+    setShowPin(false);
+  }, [initialOperator, isOpen]);
 
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      setError('O nome do operador é obrigatório.');
+      setError('O nome do vendedor é obrigatório.');
       return;
     }
     if (pin && pin.length < 4) {
@@ -62,7 +78,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
           </div>
           <div>
             <h2 className="text-lg font-extrabold text-slate-900 dark:text-slate-100">
-              {initialOperator ? 'Editar Operador' : 'Novo Operador de Caixa'}
+              {initialOperator ? 'Editar Vendedor' : 'Novo Vendedor'}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
               Controle de acesso e identificação no PDV
@@ -73,7 +89,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-              Nome do Operador <span className="text-rose-500">*</span>
+              Nome do Vendedor <span className="text-rose-500">*</span>
             </label>
             <input
               type="text"
@@ -100,7 +116,7 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
                     : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
                 }`}
               >
-                Operador de Caixa
+                Vendedor
               </button>
               <button
                 type="button"
@@ -120,14 +136,29 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
               PIN Numérico de Acesso (4 a 6 dígitos)
             </label>
-            <input
-              type="password"
-              maxLength={6}
-              value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-              placeholder="Ex: 1234"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm font-mono tracking-widest focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-            />
+            <div className="relative">
+              <input
+                type={showPin ? 'text' : 'password'}
+                maxLength={6}
+                value={pin}
+                onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+                placeholder="Ex: 1234"
+                className="w-full pl-3.5 pr-11 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm font-mono tracking-widest focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPin((prev) => !prev)}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                title={showPin ? 'Ocultar PIN' : 'Ver PIN digitado'}
+                tabIndex={-1}
+              >
+                {showPin ? (
+                  <EyeOff className="w-4 h-4" />
+                ) : (
+                  <Eye className="w-4 h-4" />
+                )}
+              </button>
+            </div>
           </div>
 
 
@@ -147,9 +178,9 @@ export const UserFormModal: React.FC<UserFormModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md shadow-emerald-600/20 transition-all"
+              className="px-5 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
             >
-              Salvar Operador
+              {initialOperator ? 'Salvar Alterações' : 'Salvar Vendedor'}
             </button>
           </div>
         </form>

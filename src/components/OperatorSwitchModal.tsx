@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, KeyRound, Shield, User, X } from 'lucide-react';
+import { Check, Eye, EyeOff, KeyRound, Shield, User, X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { Operator } from '../types';
 
@@ -17,6 +17,7 @@ export const OperatorSwitchModal: React.FC<OperatorSwitchModalProps> = ({
   const { currentOperator, operators, switchOperator } = useAuth();
   const [selectedOperator, setSelectedOperator] = useState<Operator>(currentOperator);
   const [pin, setPin] = useState<string>('');
+  const [showPin, setShowPin] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
   if (!isOpen) return null;
@@ -24,6 +25,7 @@ export const OperatorSwitchModal: React.FC<OperatorSwitchModalProps> = ({
   const handleSelect = (op: Operator) => {
     setSelectedOperator(op);
     setPin('');
+    setShowPin(false);
     setError('');
   };
 
@@ -45,7 +47,7 @@ export const OperatorSwitchModal: React.FC<OperatorSwitchModalProps> = ({
       if (onSuccess) onSuccess();
       onClose();
     } else {
-      setError('Falha ao alternar operador.');
+      setError('Falha ao alternar vendedor.');
     }
   };
 
@@ -66,10 +68,10 @@ export const OperatorSwitchModal: React.FC<OperatorSwitchModalProps> = ({
           </div>
           <div>
             <h2 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">
-              Trocar Operador
+              Trocar Vendedor
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Selecione o operador do caixa atual
+              Selecione o vendedor do caixa atual
             </p>
           </div>
         </div>
@@ -115,7 +117,7 @@ export const OperatorSwitchModal: React.FC<OperatorSwitchModalProps> = ({
                       {op.role === 'admin' ? (
                         <Shield className="w-3 h-3 text-amber-500 inline" />
                       ) : null}
-                      {op.role === 'admin' ? 'Administrador' : 'Operador de Caixa'}
+                      {op.role === 'admin' ? 'Administrador' : 'Vendedor'}
                     </span>
                   </div>
                 </div>
@@ -137,15 +139,26 @@ export const OperatorSwitchModal: React.FC<OperatorSwitchModalProps> = ({
                 <KeyRound className="w-3.5 h-3.5 text-slate-400" />
                 Digite o PIN de Acesso (4 dígitos)
               </label>
-              <input
-                type="password"
-                maxLength={6}
-                value={pin}
-                onChange={(e) => setPin(e.target.value)}
-                placeholder="Ex: 1234"
-                className="w-full text-center tracking-widest text-lg font-mono font-bold px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
-                autoFocus
-              />
+              <div className="relative">
+                <input
+                  type={showPin ? 'text' : 'password'}
+                  maxLength={6}
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value)}
+                  placeholder="Ex: 1234"
+                  className="w-full text-center tracking-widest text-lg font-mono font-bold pl-10 pr-10 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  autoFocus
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPin((prev) => !prev)}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                  title={showPin ? 'Ocultar PIN' : 'Ver PIN digitado'}
+                  tabIndex={-1}
+                >
+                  {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
               <p className="text-[11px] text-slate-400 mt-1">
                 Dica para teste: Danilo PIN = <span className="font-mono">1234</span> | Caixa 01 = <span className="font-mono">0000</span>
               </p>

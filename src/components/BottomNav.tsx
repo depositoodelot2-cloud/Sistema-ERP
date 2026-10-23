@@ -1,5 +1,6 @@
 import React from 'react';
 import { FileText, LayoutGrid, Menu, Package, ShoppingCart } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
 
 export type NavTab = 'inicio' | 'pdv' | 'inventory' | 'sales' | 'more';
@@ -14,12 +15,14 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   onTabChange,
 }) => {
   const { totalItems } = useCart();
+  const { isAdmin } = useAuth();
 
-  const tabs: Array<{ id: NavTab; label: string; icon: React.ReactNode; badge?: number }> = [
+  const allTabs: Array<{ id: NavTab; label: string; icon: React.ReactNode; badge?: number; adminOnly?: boolean }> = [
     {
       id: 'inicio',
       label: 'INÍCIO',
       icon: <LayoutGrid className="w-5 h-5" />,
+      adminOnly: true,
     },
     {
       id: 'pdv',
@@ -41,8 +44,11 @@ export const BottomNav: React.FC<BottomNavProps> = ({
       id: 'more',
       label: 'MAIS',
       icon: <Menu className="w-5 h-5" />,
+      adminOnly: true,
     },
   ];
+
+  const tabs = allTabs.filter((tab) => !tab.adminOnly || isAdmin);
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#070e1c] border-t border-slate-200 dark:border-[#131f38] select-none transition-colors">

@@ -29,14 +29,14 @@ try {
 }
 
 const DEFAULT_SETTINGS: StoreSettings = {
-  name: 'Depósito Odelot',
+  name: 'ODELOT',
   tradingName: 'Depósito Odelot Materiais & Bebidas Ltda',
-  document: '42.189.923/0001-55',
-  phone: '(11) 98765-4321',
-  address: 'Av. das Nações Unidas, 1250 - Centro',
-  cityState: 'São Paulo - SP',
+  document: '03.989.211/0001-97',
+  phone: '(31)98372-7095',
+  address: 'Avenida JK,1240 - Jardim Panorama',
+  cityState: 'Ipatinga - MG',
   receiptFooter: 'Agradecemos a sua preferência! Volte sempre.',
-  pixKey: '42189923000155',
+  pixKey: '03989211000197',
   pixKeyType: 'cnpj',
   enableSound: true,
   printerWidth: '80mm',
@@ -264,7 +264,13 @@ export const getStoredSettings = (): StoreSettings => {
     return DEFAULT_SETTINGS;
   }
   try {
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(data) };
+    const parsed = JSON.parse(data);
+    if (parsed.document === '42.189.923/0001-55') {
+      const updated = { ...DEFAULT_SETTINGS, ...parsed, ...DEFAULT_SETTINGS };
+      localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(updated));
+      return updated;
+    }
+    return { ...DEFAULT_SETTINGS, ...parsed };
   } catch {
     return DEFAULT_SETTINGS;
   }

@@ -48,10 +48,18 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
 
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [showCustomerSelect, setShowCustomerSelect] = useState(false);
+
+  // Desconto
   const [showDiscountInput, setShowDiscountInput] = useState(false);
+  const [discountType, setDiscountType] = useState<'value' | 'percent'>('value');
   const [discountVal, setDiscountVal] = useState<number>(discount || 0);
+  const [discountPercentStr, setDiscountPercentStr] = useState<string>('');
+
+  // Acréscimo
   const [showSurchargeInput, setShowSurchargeInput] = useState(false);
+  const [surchargeType, setSurchargeType] = useState<'value' | 'percent'>('value');
   const [surchargeVal, setSurchargeVal] = useState<number>(surcharge || 0);
+  const [surchargePercentStr, setSurchargePercentStr] = useState<string>('');
 
   useEffect(() => {
     setDiscountVal(discount || 0);
@@ -65,7 +73,15 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
 
   const totalProductsCount = items.length;
 
-  const handleDiscountInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const formatNumberOnly = (val: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(val);
+  };
+
+  // Handlers de Desconto
+  const handleDiscountValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawDigits = e.target.value.replace(/\D/g, '');
     if (!rawDigits) {
       setDiscountVal(0);
@@ -75,18 +91,35 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
     setDiscountVal(numeric);
   };
 
+  const handleDiscountPercentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let clean = e.target.value.replace(/[^0-9,\.]/g, '');
+    const parts = clean.split(/[,.]/);
+    if (parts.length > 2) {
+      clean = parts[0] + ',' + parts.slice(1).join('');
+    }
+    setDiscountPercentStr(clean);
+  };
+
   const handleApplyDiscount = () => {
-    setDiscount(Math.max(0, Math.min(discountVal, subtotal)));
+    if (discountType === 'value') {
+      setDiscount(Math.max(0, Math.min(discountVal, subtotal)));
+    } else {
+      const parsed = parseFloat(discountPercentStr.replace(',', '.')) || 0;
+      const calculated = Math.max(0, Math.min(subtotal, (subtotal * parsed) / 100));
+      setDiscount(calculated);
+    }
     setShowDiscountInput(false);
   };
 
   const handleRemoveDiscount = () => {
     setDiscount(0);
     setDiscountVal(0);
+    setDiscountPercentStr('');
     setShowDiscountInput(false);
   };
 
-  const handleSurchargeInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handlers de Acréscimo
+  const handleSurchargeValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawDigits = e.target.value.replace(/\D/g, '');
     if (!rawDigits) {
       setSurchargeVal(0);
@@ -96,14 +129,30 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
     setSurchargeVal(numeric);
   };
 
+  const handleSurchargePercentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let clean = e.target.value.replace(/[^0-9,\.]/g, '');
+    const parts = clean.split(/[,.]/);
+    if (parts.length > 2) {
+      clean = parts[0] + ',' + parts.slice(1).join('');
+    }
+    setSurchargePercentStr(clean);
+  };
+
   const handleApplySurcharge = () => {
-    setSurcharge(Math.max(0, surchargeVal));
+    if (surchargeType === 'value') {
+      setSurcharge(Math.max(0, surchargeVal));
+    } else {
+      const parsed = parseFloat(surchargePercentStr.replace(',', '.')) || 0;
+      const calculated = Math.max(0, (subtotal * parsed) / 100);
+      setSurcharge(calculated);
+    }
     setShowSurchargeInput(false);
   };
 
   const handleRemoveSurcharge = () => {
     setSurcharge(0);
     setSurchargeVal(0);
+    setSurchargePercentStr('');
     setShowSurchargeInput(false);
   };
 
@@ -177,7 +226,7 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
           </div>
 
           {/* ========================================================
-              CUSTOMER ROW: Cliente, Alterar, Orçamento
+              CUSTOMER ROW: Cliente, Alterar
              ======================================================== */}
           <div className="px-4 py-2.5 bg-white border-b border-slate-100 flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 text-xs truncate flex-1 min-w-0">
@@ -194,19 +243,6 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
                 className="px-2.5 py-1 rounded-lg border border-[#dbeafe] bg-white hover:bg-blue-50 text-[#2563eb] text-[11px] font-bold transition-colors shadow-2xs"
               >
                 Alterar
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onQuote();
-                }}
-                disabled={items.length === 0}
-                className="px-2.5 py-1 rounded-lg bg-[#4338ca] hover:bg-[#3730a3] text-white text-[11px] font-bold flex items-center gap-1 transition-colors shadow-xs disabled:opacity-40"
-              >
-                <FileText className="w-3 h-3" />
-                <span>Orçamento</span>
               </button>
             </div>
           </div>
@@ -326,43 +362,97 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
                 </div>
               )}
 
-              {/* Input de Desconto */}
+              {/* Input de Desconto com Opção R$ (Valor) e % (Porcentagem) */}
               {showDiscountInput && (
-                <div className="flex items-center gap-2 pt-1">
-                  <div className="relative flex-1">
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      placeholder="R$ 0,00"
-                      value={discountVal > 0 ? formatCurrency(discountVal) : ''}
-                      onChange={handleDiscountInputChange}
-                      onFocus={(e) => e.target.select()}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleApplyDiscount();
-                        }
-                        if (e.key === 'Escape') setShowDiscountInput(false);
-                      }}
-                      className="w-full px-3 py-1.5 rounded-xl border border-orange-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 shadow-2xs"
-                      autoFocus
-                    />
+                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2.5 animate-in fade-in duration-150">
+                  {/* Top: Label & Segmented Control */}
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                      Tipo de Desconto:
+                    </span>
+                    <div className="inline-flex p-0.5 rounded-xl bg-slate-200/80 dark:bg-slate-700/80 border border-slate-200 dark:border-slate-600 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setDiscountType('value')}
+                        className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                          discountType === 'value'
+                            ? 'bg-white dark:bg-slate-900 text-[#ea580c] shadow-xs'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        R$ (Valor)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDiscountType('percent')}
+                        className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                          discountType === 'percent'
+                            ? 'bg-white dark:bg-slate-900 text-[#ea580c] shadow-xs'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        % (Porcentagem)
+                      </button>
+                    </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleApplyDiscount}
-                    className="px-3 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs transition-colors cursor-pointer shrink-0 shadow-2xs"
-                  >
-                    Aplicar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowDiscountInput(false)}
-                    className="p-1.5 text-slate-400 hover:text-slate-600 cursor-pointer shrink-0"
-                    title="Cancelar"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+
+                  {/* Bottom: Input field with prefix, right-aligned number and Aplicar button */}
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1 flex items-center rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2 focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-500/20 transition-all shadow-2xs">
+                      <span className="text-xs font-bold text-slate-400 select-none mr-2">
+                        {discountType === 'value' ? 'R$' : '%'}
+                      </span>
+                      <input
+                        type="text"
+                        inputMode={discountType === 'value' ? 'numeric' : 'decimal'}
+                        placeholder={discountType === 'value' ? '0,00' : '0'}
+                        value={
+                          discountType === 'value'
+                            ? (discountVal > 0 ? formatNumberOnly(discountVal) : '0,00')
+                            : discountPercentStr
+                        }
+                        onChange={
+                          discountType === 'value'
+                            ? handleDiscountValueChange
+                            : handleDiscountPercentChange
+                        }
+                        onFocus={(e) => e.target.select()}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleApplyDiscount();
+                          }
+                          if (e.key === 'Escape') setShowDiscountInput(false);
+                        }}
+                        className="w-full text-right text-xs font-mono font-bold text-slate-900 dark:text-slate-100 bg-transparent focus:outline-none placeholder:text-slate-300"
+                        autoFocus
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleApplyDiscount}
+                      className="px-4 py-2 rounded-xl bg-[#0f172a] hover:bg-slate-800 text-white font-bold text-xs transition-colors cursor-pointer shrink-0 shadow-xs active:scale-95"
+                    >
+                      Aplicar
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowDiscountInput(false)}
+                      className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer shrink-0"
+                      title="Cancelar"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Realtime calculated equivalence for % */}
+                  {discountType === 'percent' && parseFloat(discountPercentStr.replace(',', '.')) > 0 && (
+                    <div className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 text-right pr-1">
+                      Equivale a -{formatCurrency((subtotal * (parseFloat(discountPercentStr.replace(',', '.')) || 0)) / 100)} de desconto
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -375,6 +465,7 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
                     <button
                       type="button"
                       onClick={() => {
+                        setSurchargeType('value');
                         setSurchargeVal(surcharge);
                         setShowSurchargeInput(true);
                       }}
@@ -396,43 +487,97 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
                 </div>
               )}
 
-              {/* Input de Acréscimo */}
+              {/* Input de Acréscimo com Opção R$ (Valor) e % (Porcentagem) */}
               {showSurchargeInput && (
-                <div className="flex items-center gap-2 pt-1">
-                  <div className="relative flex-1">
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      placeholder="R$ 0,00"
-                      value={surchargeVal > 0 ? formatCurrency(surchargeVal) : ''}
-                      onChange={handleSurchargeInputChange}
-                      onFocus={(e) => e.target.select()}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          handleApplySurcharge();
-                        }
-                        if (e.key === 'Escape') setShowSurchargeInput(false);
-                      }}
-                      className="w-full px-3 py-1.5 rounded-xl border border-blue-300 bg-white text-xs font-mono font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 shadow-2xs"
-                      autoFocus
-                    />
+                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2.5 animate-in fade-in duration-150">
+                  {/* Top: Label & Segmented Control */}
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                      Tipo de Acréscimo:
+                    </span>
+                    <div className="inline-flex p-0.5 rounded-xl bg-slate-200/80 dark:bg-slate-700/80 border border-slate-200 dark:border-slate-600 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setSurchargeType('value')}
+                        className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                          surchargeType === 'value'
+                            ? 'bg-white dark:bg-slate-900 text-[#2563eb] shadow-xs'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        R$ (Valor)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSurchargeType('percent')}
+                        className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                          surchargeType === 'percent'
+                            ? 'bg-white dark:bg-slate-900 text-[#2563eb] shadow-xs'
+                            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        % (Porcentagem)
+                      </button>
+                    </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleApplySurcharge}
-                    className="px-3 py-1.5 rounded-xl bg-[#2563eb] hover:bg-blue-700 text-white font-bold text-xs transition-colors cursor-pointer shrink-0 shadow-2xs"
-                  >
-                    Aplicar
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowSurchargeInput(false)}
-                    className="p-1.5 text-slate-400 hover:text-slate-600 cursor-pointer shrink-0"
-                    title="Cancelar"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+
+                  {/* Bottom: Input field with prefix, right-aligned number and Aplicar button */}
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1 flex items-center rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2 focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all shadow-2xs">
+                      <span className="text-xs font-bold text-slate-400 select-none mr-2">
+                        {surchargeType === 'value' ? 'R$' : '%'}
+                      </span>
+                      <input
+                        type="text"
+                        inputMode={surchargeType === 'value' ? 'numeric' : 'decimal'}
+                        placeholder={surchargeType === 'value' ? '0,00' : '0'}
+                        value={
+                          surchargeType === 'value'
+                            ? (surchargeVal > 0 ? formatNumberOnly(surchargeVal) : '0,00')
+                            : surchargePercentStr
+                        }
+                        onChange={
+                          surchargeType === 'value'
+                            ? handleSurchargeValueChange
+                            : handleSurchargePercentChange
+                        }
+                        onFocus={(e) => e.target.select()}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleApplySurcharge();
+                          }
+                          if (e.key === 'Escape') setShowSurchargeInput(false);
+                        }}
+                        className="w-full text-right text-xs font-mono font-bold text-slate-900 dark:text-slate-100 bg-transparent focus:outline-none placeholder:text-slate-300"
+                        autoFocus
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleApplySurcharge}
+                      className="px-4 py-2 rounded-xl bg-[#0f172a] hover:bg-slate-800 text-white font-bold text-xs transition-colors cursor-pointer shrink-0 shadow-xs active:scale-95"
+                    >
+                      Aplicar
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowSurchargeInput(false)}
+                      className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer shrink-0"
+                      title="Cancelar"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+
+                  {/* Realtime calculated equivalence for % */}
+                  {surchargeType === 'percent' && parseFloat(surchargePercentStr.replace(',', '.')) > 0 && (
+                    <div className="text-[11px] font-medium text-blue-600 dark:text-blue-400 text-right pr-1">
+                      Equivale a +{formatCurrency((subtotal * (parseFloat(surchargePercentStr.replace(',', '.')) || 0)) / 100)} de acréscimo
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -442,7 +587,9 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
                   <button
                     type="button"
                     onClick={() => {
-                      setDiscountVal(discount || 0);
+                      setDiscountType('value');
+                      setDiscountVal(0);
+                      setDiscountPercentStr('');
                       setShowDiscountInput(true);
                     }}
                     className="flex items-center gap-1.5 text-xs font-bold text-[#ea580c] hover:text-orange-700 transition-colors cursor-pointer"
@@ -456,7 +603,9 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
                   <button
                     type="button"
                     onClick={() => {
-                      setSurchargeVal(surcharge || 0);
+                      setSurchargeType('value');
+                      setSurchargeVal(0);
+                      setSurchargePercentStr('');
                       setShowSurchargeInput(true);
                     }}
                     className="flex items-center gap-1.5 text-xs font-bold text-[#2563eb] hover:text-blue-700 transition-colors cursor-pointer"

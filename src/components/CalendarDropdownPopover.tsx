@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, Check, ChevronDown } from 'lucide-react';
+import { getStoredSales } from '../utils/storage';
 
 interface CalendarDropdownPopoverProps {
   isOpen: boolean;
@@ -7,6 +8,7 @@ interface CalendarDropdownPopoverProps {
   selectedDate?: string; // YYYY-MM-DD
   startDate?: string; // YYYY-MM-DD
   endDate?: string; // YYYY-MM-DD
+  saleDates?: Set<string> | string[];
   onSelectSingleDate: (date: string) => void;
   onSelectRange: (startDate: string, endDate: string) => void;
   onClear: () => void;
@@ -51,6 +53,7 @@ export const CalendarDropdownPopover: React.FC<CalendarDropdownPopoverProps> = (
   selectedDate,
   startDate,
   endDate,
+  saleDates,
   onSelectSingleDate,
   onSelectRange,
   onClear,
@@ -58,6 +61,26 @@ export const CalendarDropdownPopover: React.FC<CalendarDropdownPopoverProps> = (
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [coords, setCoords] = useState<{ top: number; left: number } | null>(null);
+
+  // Compute sale dates set for rendering dot indicators under days with sales
+  const effectiveSaleDates = useMemo(() => {
+    if (saleDates) {
+      return saleDates instanceof Set ? saleDates : new Set(saleDates);
+    }
+    try {
+      const stored = getStoredSales();
+      const set = new Set<string>();
+      stored.forEach((s) => {
+        if (s.status !== 'cancelled' && s.date) {
+          const d = s.date.split('T')[0];
+          if (d) set.add(d);
+        }
+      });
+      return set;
+    } catch {
+      return new Set<string>();
+    }
+  }, [saleDates, isOpen]);
 
   // Tab mode: 'single' (Dia Único) or 'range' (Intervalo/Período)
   const [mode, setMode] = useState<'single' | 'range'>(() => {
@@ -388,6 +411,8 @@ export const CalendarDropdownPopover: React.FC<CalendarDropdownPopoverProps> = (
 
           const isToday = item.dateStr === todayStr;
 
+          const hasSale = effectiveSaleDates.has(item.dateStr);
+
           return (
             <div
               key={idx}
@@ -400,7 +425,7 @@ export const CalendarDropdownPopover: React.FC<CalendarDropdownPopoverProps> = (
               <button
                 type="button"
                 onClick={() => handleDayClick(item.dateStr)}
-                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center mx-auto text-xs transition-all cursor-pointer ${
+                className={`relative w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center mx-auto text-xs transition-all cursor-pointer ${
                   isHighlighted
                     ? 'bg-[#0055ff] text-white font-black shadow-sm ring-2 ring-black/70 dark:ring-white/80 scale-105'
                     : isToday
@@ -410,7 +435,19 @@ export const CalendarDropdownPopover: React.FC<CalendarDropdownPopoverProps> = (
                     : 'text-slate-300 dark:text-slate-600 hover:bg-slate-50 dark:hover:bg-slate-900/50'
                 }`}
               >
-                {item.dayNumber}
+                <span>{item.dayNumber}</span>
+                {hasSale && (
+                  <span
+                    aria-hidden="true"
+                    className={`absolute bottom-0.5 sm:bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full pointer-events-none transition-colors ${
+                      isHighlighted
+                        ? 'bg-white'
+                        : item.isCurrentMonth
+                        ? 'bg-blue-600 dark:bg-blue-400'
+                        : 'bg-blue-400/50 dark:bg-blue-600/50'
+                    }`}
+                  />
+                )}
               </button>
             </div>
           );

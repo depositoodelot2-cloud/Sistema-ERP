@@ -37,6 +37,7 @@ import {
   getStoredProducts,
   getStoredSales,
   getStoredSettings,
+  saveCurrentOperator,
   saveStoredCategories,
   saveStoredCustomers,
   saveStoredOperators,
@@ -223,11 +224,15 @@ export const MorePage: React.FC = () => {
   // Operators CRUD
   const handleSaveOperator = (data: Omit<Operator, 'id'>) => {
     if (editingOperator) {
+      const updatedOp = { ...editingOperator, ...data };
       const updated = operators.map((o) =>
-        o.id === editingOperator.id ? { ...o, ...data } : o
+        o.id === editingOperator.id ? updatedOp : o
       );
       setOperators(updated);
       saveStoredOperators(updated);
+      if (currentOperator.id === editingOperator.id) {
+        saveCurrentOperator(updatedOp);
+      }
       setEditingOperator(null);
     } else {
       const newOp: Operator = {
@@ -345,12 +350,12 @@ export const MorePage: React.FC = () => {
           Configurações
         </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-          Clientes, categorias, operadores e dados da loja
+          Clientes, categorias, vendedores e dados da loja
         </p>
       </div>
 
       {/* ========================================================
-          2. NAVIGATION CONTAINER: 5 Cards (Clientes, Categorias, Operadores, Dados, Banco)
+          2. NAVIGATION CONTAINER: 5 Cards (Clientes, Categorias, Vendedores, Dados, Banco)
          ======================================================== */}
       <div className="rounded-3xl border border-slate-200 dark:border-[#1a2846] bg-white dark:bg-[#0e172a] p-3 shadow-xs space-y-2">
         {/* Row 1: Clientes & Categorias */}
@@ -402,9 +407,9 @@ export const MorePage: React.FC = () => {
           </button>
         </div>
 
-        {/* Row 2: Operadores & Dados da Loja */}
+        {/* Row 2: Vendedores & Dados da Loja */}
         <div className="grid grid-cols-2 gap-2">
-          {/* Operadores Tab */}
+          {/* Vendedores Tab */}
           <button
             type="button"
             onClick={() => setActiveSection('operators')}
@@ -415,7 +420,7 @@ export const MorePage: React.FC = () => {
             }`}
           >
             <Shield className="w-4 h-4" />
-            <span>Operadores</span>
+            <span>Vendedores</span>
             <span
               className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
                 activeSection === 'operators'
@@ -660,7 +665,7 @@ export const MorePage: React.FC = () => {
       )}
 
       {/* ========================================================
-          5. SECTION: OPERADORES (Full CRUD)
+          5. SECTION: VENDEDORES (Full CRUD)
          ======================================================== */}
       {activeSection === 'operators' && (
         <div className="space-y-3 animate-in fade-in duration-150">
@@ -668,7 +673,7 @@ export const MorePage: React.FC = () => {
           <div className="flex items-center justify-between gap-2">
             <div>
               <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">
-                Operadores & Acessos
+                Vendedores & Acessos
               </h2>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Usuários do sistema, permissões e senhas PIN
@@ -684,7 +689,7 @@ export const MorePage: React.FC = () => {
               className="h-10 px-3.5 rounded-2xl bg-[#2563eb] hover:bg-blue-600 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-blue-500/20 active:scale-95 transition-all"
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
-              <span>Novo Operador</span>
+              <span>Novo Vendedor</span>
             </button>
           </div>
 
@@ -705,7 +710,7 @@ export const MorePage: React.FC = () => {
                         {op.name}
                       </span>
                       <span className="px-2 py-0.5 rounded-lg text-[10px] font-black uppercase tracking-wide bg-blue-50 dark:bg-blue-950/60 text-[#2563eb] border border-blue-200 dark:border-blue-900">
-                        {op.role}
+                        {op.role === 'admin' ? 'Administrador' : 'Vendedor'}
                       </span>
                     </div>
                     <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
@@ -723,7 +728,7 @@ export const MorePage: React.FC = () => {
                       setShowOperatorModal(true);
                     }}
                     className="w-8 h-8 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-[#152342] flex items-center justify-center transition-colors"
-                    title="Editar operador"
+                    title="Editar vendedor"
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
@@ -732,7 +737,7 @@ export const MorePage: React.FC = () => {
                     onClick={() => setOperatorToDelete(op)}
                     disabled={operators.length <= 1}
                     className="w-8 h-8 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 flex items-center justify-center transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                    title="Excluir operador"
+                    title="Excluir vendedor"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -1289,8 +1294,8 @@ export const MorePage: React.FC = () => {
         isOpen={!!operatorToDelete}
         onClose={() => setOperatorToDelete(null)}
         onConfirm={handleDeleteOperator}
-        title="Excluir Operador"
-        message={`Tem certeza que deseja excluir o operador "${operatorToDelete?.name}"?`}
+        title="Excluir Vendedor"
+        message={`Tem certeza que deseja excluir o vendedor "${operatorToDelete?.name}"?`}
         confirmText="Excluir"
         isDestructive
       />

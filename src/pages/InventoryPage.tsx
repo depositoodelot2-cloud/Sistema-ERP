@@ -11,7 +11,7 @@ import {
   X,
   ZoomIn,
 } from 'lucide-react';
-import { BarcodeScannerModal } from '../components/BarcodeScannerModal';
+import { CameraBarcodeScannerModal } from '../components/CameraBarcodeScannerModal';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { ProductFormModal } from '../components/ProductFormModal';
 import { ProductImageZoomModal } from '../components/ProductImageZoomModal';
@@ -147,8 +147,8 @@ export const InventoryPage: React.FC = () => {
         
         {/* 1. HEADER: Title & Action Buttons (Spreadsheet, Novo Produto) */}
         <div className="flex items-center justify-between gap-2">
-          <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
-            Controle de <br className="hidden sm:inline" /> Estoque
+          <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            Estoque
           </h1>
 
           <div className="flex items-center gap-2">
@@ -380,11 +380,11 @@ export const InventoryPage: React.FC = () => {
         isDestructive
       />
 
-      {/* Barcode Scanner Modal */}
-      <BarcodeScannerModal
+      {/* Camera Barcode Scanner Modal (abre direto a câmera) */}
+      <CameraBarcodeScannerModal
         isOpen={showBarcodeScanner}
         onClose={() => setShowBarcodeScanner(false)}
-        onScan={(code) => setSearch(code)}
+        onDetected={(code) => setSearch(code)}
       />
 
       {/* Product Image Zoom Modal */}

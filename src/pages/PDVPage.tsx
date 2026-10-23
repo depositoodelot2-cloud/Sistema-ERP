@@ -13,7 +13,6 @@ import {
   X,
   ZoomIn,
 } from 'lucide-react';
-import { BarcodeScannerModal } from '../components/BarcodeScannerModal';
 import { CameraBarcodeScannerModal } from '../components/CameraBarcodeScannerModal';
 import { CartDrawerModal } from '../components/CartDrawerModal';
 import { CheckoutModal } from '../components/CheckoutModal';
@@ -51,12 +50,44 @@ export const PDVPage: React.FC = () => {
   const [showSelectSaleForReturn, setShowSelectSaleForReturn] = useState(false);
   const [selectedSaleForReturn, setSelectedSaleForReturn] = useState<Sale | null>(null);
   const [showReturnModal, setShowReturnModal] = useState(false);
-  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [showCameraScanner, setShowCameraScanner] = useState(false);
   const [completedSale, setCompletedSale] = useState<Sale | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
   const [scanAlert, setScanAlert] = useState<string | null>(null);
   const [zoomedProduct, setZoomedProduct] = useState<Product | null>(null);
+
+  // Hardware barcode scanner listener (USB/Bluetooth scanners send keystrokes and Enter)
+  useEffect(() => {
+    let buffer = '';
+    let lastKeyTime = Date.now();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+        return;
+      }
+
+      const now = Date.now();
+      if (now - lastKeyTime > 120) {
+        buffer = '';
+      }
+      lastKeyTime = now;
+
+      if (e.key === 'Enter') {
+        if (buffer.trim().length >= 3) {
+          handleBarcodeScanned(buffer.trim());
+        }
+        buffer = '';
+      } else if (e.key.length === 1) {
+        buffer += e.key;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [products]);
 
   // Sync storage
   useEffect(() => {
@@ -194,12 +225,12 @@ export const PDVPage: React.FC = () => {
             )}
           </div>
 
-          {/* Barcode Scanner Button */}
+          {/* Barcode Scanner Button - opens camera directly */}
           <button
             type="button"
-            onClick={() => setShowBarcodeScanner(true)}
+            onClick={() => setShowCameraScanner(true)}
             className="w-9 h-9 rounded-2xl bg-white dark:bg-[#0e182e] border border-slate-200 dark:border-[#1b2c4e] text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:border-slate-300 dark:hover:border-[#2b4170] flex items-center justify-center shrink-0 transition-colors shadow-2xs"
-            title="Ler código de barras"
+            title="Escanear com a câmera"
           >
             <div className="flex items-center gap-0.5">
               <span className="w-0.5 h-4 bg-slate-500 dark:bg-slate-300 rounded-full" />
@@ -563,13 +594,7 @@ export const PDVPage: React.FC = () => {
         }}
       />
 
-      {/* Barcode / Camera Modals */}
-      <BarcodeScannerModal
-        isOpen={showBarcodeScanner}
-        onClose={() => setShowBarcodeScanner(false)}
-        onScan={handleBarcodeScanned}
-      />
-
+      {/* Camera Barcode Scanner Modal (abre direto a câmera) */}
       <CameraBarcodeScannerModal
         isOpen={showCameraScanner}
         onClose={() => setShowCameraScanner(false)}

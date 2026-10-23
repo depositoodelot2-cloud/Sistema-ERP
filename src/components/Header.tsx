@@ -35,7 +35,7 @@ export const Header: React.FC<HeaderProps> = ({ currentTab = 'pdv' }) => {
             type="button"
             onClick={() => setShowSwitchModal(true)}
             className="flex-1 min-w-0 h-9 sm:h-10 flex items-center justify-between px-2 sm:px-2.5 rounded-xl sm:rounded-2xl bg-slate-100 dark:bg-[#111c34] border border-slate-200 dark:border-[#1e2f54] text-slate-800 dark:text-white hover:border-slate-300 dark:hover:border-[#2d4476] transition-all shadow-xs active:scale-[0.98] cursor-pointer"
-            title="Trocar operador do caixa"
+            title="Trocar vendedor do caixa"
           >
             <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
               <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#2563eb] text-white flex items-center justify-center text-[10px] sm:text-[11px] font-black shrink-0">
