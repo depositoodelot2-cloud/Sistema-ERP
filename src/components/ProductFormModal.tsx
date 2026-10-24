@@ -356,23 +356,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
             </div>
 
             {/* ========================================================
-                5. ROW: Preço de Venda & Preço de Custo
+                5. ROW: Preço de Custo & Preço de Venda
                ======================================================== */}
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-bold text-slate-900 dark:text-slate-200 block mb-1">
-                  Preço de Venda *
-                </label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={sellPrice !== null && sellPrice > 0 ? formatCurrency(sellPrice) : ''}
-                  onChange={handlePriceChange(setSellPrice)}
-                  placeholder="R$ 0,00"
-                  className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs sm:text-sm font-black font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#2563eb] shadow-2xs"
-                />
-              </div>
-
               <div>
                 <label className="text-xs font-bold text-slate-900 dark:text-slate-200 block mb-1">
                   Preço de Custo
@@ -382,6 +368,20 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   inputMode="numeric"
                   value={costPrice !== null && costPrice > 0 ? formatCurrency(costPrice) : ''}
                   onChange={handlePriceChange(setCostPrice)}
+                  placeholder="R$ 0,00"
+                  className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs sm:text-sm font-black font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#2563eb] shadow-2xs"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-200 block mb-1">
+                  Preço de Venda *
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={sellPrice !== null && sellPrice > 0 ? formatCurrency(sellPrice) : ''}
+                  onChange={handlePriceChange(setSellPrice)}
                   placeholder="R$ 0,00"
                   className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs sm:text-sm font-black font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#2563eb] shadow-2xs"
                 />
@@ -614,7 +614,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 className="w-full py-3 px-4 rounded-2xl bg-[#2563eb] hover:bg-blue-600 text-white font-extrabold text-sm shadow-lg shadow-blue-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
                 <Check className="w-4 h-4 stroke-[2.5]" />
-                <span>Salvar Produto</span>
+                <span>{initialProduct ? 'Salvar Alteração' : 'Salvar Produto'}</span>
               </button>
             </div>
           </form>
