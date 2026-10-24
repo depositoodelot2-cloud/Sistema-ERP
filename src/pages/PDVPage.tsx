@@ -13,7 +13,7 @@ import {
   X,
   ZoomIn,
 } from 'lucide-react';
-import { CameraBarcodeScannerModal } from '../components/CameraBarcodeScannerModal';
+import { BarcodeScannerModal } from '../components/BarcodeScannerModal';
 import { CartDrawerModal } from '../components/CartDrawerModal';
 import { CheckoutModal } from '../components/CheckoutModal';
 import { ProductImageZoomModal } from '../components/ProductImageZoomModal';
@@ -594,11 +594,11 @@ export const PDVPage: React.FC = () => {
         }}
       />
 
-      {/* Camera Barcode Scanner Modal (abre direto a câmera) */}
-      <CameraBarcodeScannerModal
+      {/* Barcode Scanner Modal */}
+      <BarcodeScannerModal
         isOpen={showCameraScanner}
         onClose={() => setShowCameraScanner(false)}
-        onDetected={handleBarcodeScanned}
+        onScan={handleBarcodeScanned}
       />
 
       {/* Product Image Zoom Modal */}

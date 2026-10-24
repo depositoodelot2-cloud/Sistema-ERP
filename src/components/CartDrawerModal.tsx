@@ -165,22 +165,22 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150">
-        <div className="relative w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl text-slate-900 shadow-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[90vh]">
+        <div className="relative w-full max-w-md bg-white dark:bg-[#0f172a] rounded-t-3xl sm:rounded-3xl text-slate-900 dark:text-slate-100 shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[90vh]">
           
           {/* ========================================================
               TOP HEADER: Orange Bag Icon, Title, Orçamento, Trash, Close
              ======================================================== */}
-          <div className="p-4 sm:p-5 flex items-center justify-between border-b border-slate-100 bg-white">
+          <div className="p-4 sm:p-5 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-[#0f172a] shrink-0">
             <div className="flex items-center gap-3">
               {/* Orange Shopping Bag Icon */}
               <div className="w-11 h-11 rounded-2xl bg-[#ff5500] text-white flex items-center justify-center shadow-md shadow-orange-500/20 shrink-0">
                 <ShoppingBag className="w-5 h-5 stroke-[2.2]" />
               </div>
               <div>
-                <h2 className="text-base font-extrabold text-slate-900 leading-tight">
+                <h2 className="text-base font-extrabold text-slate-900 dark:text-white leading-tight">
                   Carrinho de Compras
                 </h2>
-                <span className="text-xs text-slate-400 font-medium">
+                <span className="text-xs text-slate-400 dark:text-slate-400 font-medium">
                   {totalProductsCount} {totalProductsCount === 1 ? 'produto adicionado' : 'produtos adicionados'}
                 </span>
               </div>
@@ -195,7 +195,7 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
                   onQuote();
                 }}
                 disabled={items.length === 0}
-                className="px-2.5 py-1.5 rounded-xl border border-[#dbe4ff] bg-[#f0f4ff] hover:bg-[#e4ebff] text-[#4f46e5] font-bold text-xs flex items-center gap-1.5 transition-colors disabled:opacity-40"
+                className="px-2.5 py-1.5 rounded-xl border border-[#dbe4ff] dark:border-indigo-900/60 bg-[#f0f4ff] dark:bg-indigo-950/40 hover:bg-[#e4ebff] dark:hover:bg-indigo-950/60 text-[#4f46e5] dark:text-indigo-400 font-bold text-xs flex items-center gap-1.5 transition-colors disabled:opacity-40 cursor-pointer"
               >
                 <FileText className="w-3.5 h-3.5" />
                 <span>Orçamento</span>
@@ -206,7 +206,7 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowClearConfirm(true)}
-                  className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 transition-colors"
+                  className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
                   title="Esvaziar carrinho"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -217,7 +217,7 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-white flex items-center justify-center transition-colors"
                 title="Fechar"
               >
                 <X className="w-4 h-4" />
@@ -228,10 +228,10 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
           {/* ========================================================
               CUSTOMER ROW: Cliente, Alterar
              ======================================================== */}
-          <div className="px-4 py-2.5 bg-white border-b border-slate-100 flex items-center justify-between gap-2">
+          <div className="px-4 py-2.5 bg-white dark:bg-[#0f172a] border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5 text-xs truncate flex-1 min-w-0">
-              <span className="text-slate-500 font-medium">Cliente:</span>
-              <span className="font-bold text-slate-900 truncate">
+              <span className="text-slate-500 dark:text-slate-400 font-medium">Cliente:</span>
+              <span className="font-bold text-slate-900 dark:text-white truncate">
                 {customerDisplayName}
               </span>
             </div>
@@ -240,7 +240,7 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
               <button
                 type="button"
                 onClick={() => setShowCustomerSelect(true)}
-                className="px-2.5 py-1 rounded-lg border border-[#dbeafe] bg-white hover:bg-blue-50 text-[#2563eb] text-[11px] font-bold transition-colors shadow-2xs"
+                className="px-2.5 py-1 rounded-lg border border-[#dbeafe] dark:border-blue-900/60 bg-white dark:bg-blue-950/40 hover:bg-blue-50 dark:hover:bg-blue-950/70 text-[#2563eb] dark:text-blue-400 text-[11px] font-bold transition-colors shadow-2xs cursor-pointer"
               >
                 Alterar
               </button>
@@ -248,13 +248,13 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
           </div>
 
           {/* ========================================================
-              ITEMS LIST: White Cards with Steppers and Trash
+              ITEMS LIST: Cards with Steppers and Trash
              ======================================================== */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-2.5 bg-[#fafbfc]">
+          <div className="flex-1 overflow-y-auto p-4 space-y-2.5 bg-[#fafbfc] dark:bg-[#080f1d]">
             {items.length === 0 ? (
               <div className="py-16 flex flex-col items-center justify-center text-slate-400 text-center">
                 <ShoppingBag className="w-14 h-14 stroke-1 mb-2 opacity-30 text-slate-400" />
-                <p className="font-bold text-sm text-slate-700">Carrinho Vazio</p>
+                <p className="font-bold text-sm text-slate-700 dark:text-slate-200">Carrinho Vazio</p>
                 <p className="text-xs text-slate-400 max-w-xs mt-0.5">
                   Adicione produtos no PDV para fechar a venda.
                 </p>
@@ -263,17 +263,17 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
               items.map((item) => (
                 <div
                   key={item.id}
-                  className="p-3.5 rounded-2xl bg-white border border-slate-150 shadow-[0_2px_8px_rgba(0,0,0,0.03)] flex items-center justify-between gap-3"
+                  className="p-3.5 rounded-2xl bg-white dark:bg-[#111c33] border border-slate-150 dark:border-[#1a2b4d] shadow-[0_2px_8px_rgba(0,0,0,0.03)] dark:shadow-none flex items-center justify-between gap-3"
                 >
                   {/* Name and Price breakdown */}
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-black text-slate-900 uppercase block truncate leading-tight">
+                    <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase block truncate leading-tight">
                       {item.product.name}
                     </h3>
-                    <div className="text-xs text-slate-500 font-mono mt-1 flex items-center gap-1.5 flex-wrap">
+                    <div className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-1 flex items-center gap-1.5 flex-wrap">
                       <span>{formatCurrency(item.unitPrice)} / {item.product.unit.toUpperCase()}</span>
-                      <span className="text-slate-300">•</span>
-                      <span className="font-bold text-slate-900">
+                      <span className="text-slate-300 dark:text-slate-600">•</span>
+                      <span className="font-bold text-slate-900 dark:text-white">
                         {formatCurrency(item.subtotal)}
                       </span>
                     </div>
@@ -281,16 +281,16 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
 
                   {/* Stepper & Trash */}
                   <div className="flex items-center gap-2 shrink-0">
-                    <div className="rounded-xl border border-blue-200 bg-[#f0f6ff] p-0.5 flex items-center">
+                    <div className="rounded-xl border border-blue-200 dark:border-blue-900/60 bg-[#f0f6ff] dark:bg-[#16233f] p-0.5 flex items-center">
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
-                        className="w-6 h-6 rounded-lg bg-white text-blue-600 hover:bg-blue-50 flex items-center justify-center shadow-2xs transition-colors active:scale-95"
+                        className="w-6 h-6 rounded-lg bg-white dark:bg-[#1f2e4d] text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-[#253966] flex items-center justify-center shadow-2xs transition-colors active:scale-95"
                       >
                         <Minus className="w-3 h-3 stroke-[2.5]" />
                       </button>
 
-                      <span className="w-7 text-center text-xs font-black text-slate-900 font-mono">
+                      <span className="w-7 text-center text-xs font-black text-slate-900 dark:text-white font-mono">
                         {item.quantity}
                       </span>
 
@@ -318,14 +318,14 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
           </div>
 
           {/* ========================================================
-              BOTTOM TOTALS & ACTIONS: Exactly like Screenshot
+              BOTTOM TOTALS & ACTIONS
              ======================================================== */}
-          <div className="p-4 sm:p-5 border-t border-slate-100 bg-white space-y-3 shrink-0">
+          <div className="p-4 sm:p-5 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-[#0f172a] space-y-3 shrink-0">
             
             {/* Subtotal row */}
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-500 font-medium">Subtotal</span>
-              <span className="font-bold text-slate-900 font-mono text-sm">
+              <span className="text-slate-500 dark:text-slate-400 font-medium">Subtotal</span>
+              <span className="font-bold text-slate-900 dark:text-white font-mono text-sm">
                 {formatCurrency(subtotal)}
               </span>
             </div>
@@ -335,7 +335,7 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
               {/* Desconto Aplicado */}
               {discount > 0 && (
                 <div className="flex justify-between items-center text-xs">
-                  <div className="flex items-center gap-1.5 text-emerald-600 font-bold">
+                  <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-bold">
                     <Tag className="w-3.5 h-3.5" />
                     <span>Desconto aplicado:</span>
                     <button
@@ -344,7 +344,7 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
                         setDiscountVal(discount);
                         setShowDiscountInput(true);
                       }}
-                      className="text-[10px] text-emerald-700 underline ml-1 hover:text-emerald-900 cursor-pointer"
+                      className="text-[10px] text-emerald-700 dark:text-emerald-400 underline ml-1 hover:text-emerald-900 cursor-pointer"
                     >
                       editar
                     </button>
@@ -356,7 +356,7 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
                       remover
                     </button>
                   </div>
-                  <span className="font-bold text-emerald-600 font-mono">
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono">
                     -{formatCurrency(discount)}
                   </span>
                 </div>
@@ -376,7 +376,7 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
                         onClick={() => setDiscountType('value')}
                         className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
                           discountType === 'value'
-                            ? 'bg-white dark:bg-slate-900 text-[#ea580c] shadow-xs'
+                            ? 'bg-white dark:bg-slate-900 text-[#ea580c] dark:text-orange-400 shadow-xs'
                             : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                         }`}
                       >
@@ -387,7 +387,7 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
                         onClick={() => setDiscountType('percent')}
                         className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
                           discountType === 'percent'
-                            ? 'bg-white dark:bg-slate-900 text-[#ea580c] shadow-xs'
+                            ? 'bg-white dark:bg-slate-900 text-[#ea580c] dark:text-orange-400 shadow-xs'
                             : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                         }`}
                       >
@@ -432,7 +432,7 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
                     <button
                       type="button"
                       onClick={handleApplyDiscount}
-                      className="px-4 py-2 rounded-xl bg-[#0f172a] hover:bg-slate-800 text-white font-bold text-xs transition-colors cursor-pointer shrink-0 shadow-xs active:scale-95"
+                      className="px-4 py-2 rounded-xl bg-[#0f172a] dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white font-bold text-xs transition-colors cursor-pointer shrink-0 shadow-xs active:scale-95"
                     >
                       Aplicar
                     </button>
@@ -459,7 +459,7 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
               {/* Acréscimo Aplicado */}
               {surcharge > 0 && (
                 <div className="flex justify-between items-center text-xs">
-                  <div className="flex items-center gap-1.5 text-[#2563eb] font-bold">
+                  <div className="flex items-center gap-1.5 text-[#2563eb] dark:text-blue-400 font-bold">
                     <TrendingUp className="w-3.5 h-3.5" />
                     <span>Acréscimo aplicado:</span>
                     <button
@@ -469,7 +469,7 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
                         setSurchargeVal(surcharge);
                         setShowSurchargeInput(true);
                       }}
-                      className="text-[10px] text-blue-700 underline ml-1 hover:text-blue-900 cursor-pointer"
+                      className="text-[10px] text-blue-700 dark:text-blue-400 underline ml-1 hover:text-blue-900 cursor-pointer"
                     >
                       editar
                     </button>
@@ -481,7 +481,7 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
                       remover
                     </button>
                   </div>
-                  <span className="font-bold text-[#2563eb] font-mono">
+                  <span className="font-bold text-[#2563eb] dark:text-blue-400 font-mono">
                     +{formatCurrency(surcharge)}
                   </span>
                 </div>
@@ -501,7 +501,7 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
                         onClick={() => setSurchargeType('value')}
                         className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
                           surchargeType === 'value'
-                            ? 'bg-white dark:bg-slate-900 text-[#2563eb] shadow-xs'
+                            ? 'bg-white dark:bg-slate-900 text-[#2563eb] dark:text-blue-400 shadow-xs'
                             : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                         }`}
                       >
@@ -512,7 +512,7 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
                         onClick={() => setSurchargeType('percent')}
                         className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
                           surchargeType === 'percent'
-                            ? 'bg-white dark:bg-slate-900 text-[#2563eb] shadow-xs'
+                            ? 'bg-white dark:bg-slate-900 text-[#2563eb] dark:text-blue-400 shadow-xs'
                             : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                         }`}
                       >
@@ -557,7 +557,7 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
                     <button
                       type="button"
                       onClick={handleApplySurcharge}
-                      className="px-4 py-2 rounded-xl bg-[#0f172a] hover:bg-slate-800 text-white font-bold text-xs transition-colors cursor-pointer shrink-0 shadow-xs active:scale-95"
+                      className="px-4 py-2 rounded-xl bg-[#0f172a] dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white font-bold text-xs transition-colors cursor-pointer shrink-0 shadow-xs active:scale-95"
                     >
                       Aplicar
                     </button>
@@ -592,7 +592,7 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
                       setDiscountPercentStr('');
                       setShowDiscountInput(true);
                     }}
-                    className="flex items-center gap-1.5 text-xs font-bold text-[#ea580c] hover:text-orange-700 transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 text-xs font-bold text-[#ea580c] dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 transition-colors cursor-pointer"
                   >
                     <Tag className="w-3.5 h-3.5" />
                     <span>+ Adicionar Desconto</span>
@@ -608,7 +608,7 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
                       setSurchargePercentStr('');
                       setShowSurchargeInput(true);
                     }}
-                    className="flex items-center gap-1.5 text-xs font-bold text-[#2563eb] hover:text-blue-700 transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 text-xs font-bold text-[#2563eb] dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors cursor-pointer"
                   >
                     <TrendingUp className="w-3.5 h-3.5" />
                     <span>+ Adicionar Acréscimo</span>
@@ -617,19 +617,19 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
               </div>
             </div>
 
-            <div className="border-t border-slate-100 my-1" />
+            <div className="border-t border-slate-100 dark:border-slate-800 my-1" />
 
             {/* TOTAL DOS ITENS Highlight */}
             <div className="flex items-end justify-between">
               <div>
-                <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 block">
+                <span className="text-[11px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
                   TOTAL DOS ITENS
                 </span>
-                <span className="text-[11px] text-slate-400 font-medium">
+                <span className="text-[11px] text-slate-400 dark:text-slate-400 font-medium">
                   {items.reduce((sum, i) => sum + i.quantity, 0)} itens no carrinho
                 </span>
               </div>
-              <span className="text-2xl sm:text-3xl font-black font-mono text-slate-900 leading-none">
+              <span className="text-2xl sm:text-3xl font-black font-mono text-slate-900 dark:text-white leading-none">
                 {formatCurrency(total)}
               </span>
             </div>
@@ -637,20 +637,20 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
             {/* ACTION BUTTONS: DEVOLUÇÃO & COBRAR */}
             <div className="grid grid-cols-2 gap-2.5 pt-2">
               
-              {/* DEVOLUÇÃO button (pale cream/yellow background, amber border & text) */}
+              {/* DEVOLUÇÃO button */}
               <button
                 type="button"
                 onClick={() => {
                   onClose();
                   onReturn();
                 }}
-                className="py-3 px-3 rounded-2xl bg-[#fffdf5] border-2 border-[#fcd34d] hover:bg-[#fff9e6] active:scale-[0.98] text-[#78350f] font-black text-xs sm:text-sm tracking-wider uppercase flex items-center justify-center gap-1.5 transition-all shadow-xs"
+                className="py-3 px-3 rounded-2xl bg-[#fffdf5] dark:bg-amber-950/20 border-2 border-[#fcd34d] dark:border-amber-700/60 hover:bg-[#fff9e6] dark:hover:bg-amber-950/30 active:scale-[0.98] text-[#78350f] dark:text-amber-300 font-black text-xs sm:text-sm tracking-wider uppercase flex items-center justify-center gap-1.5 transition-all shadow-xs"
               >
-                <RotateCcw className="w-4 h-4 text-[#92400e] stroke-[2.2]" />
+                <RotateCcw className="w-4 h-4 text-[#92400e] dark:text-amber-400 stroke-[2.2]" />
                 <span>DEVOLUÇÃO</span>
               </button>
 
-              {/* COBRAR button (vibrant orange, bold, arrow right) */}
+              {/* COBRAR button */}
               <button
                 type="button"
                 onClick={() => {

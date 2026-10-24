@@ -36,7 +36,7 @@ export const DateFilterBar: React.FC<DateFilterBarProps> = ({
         <button
           type="button"
           onClick={() => setShowModal(true)}
-          className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-bold text-slate-800 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors"
+          className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-xs font-bold text-slate-800 dark:text-slate-200 shadow-xs hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
         >
           <Calendar className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           <span>{currentRange.label}</span>

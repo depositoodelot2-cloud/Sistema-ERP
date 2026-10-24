@@ -30,7 +30,7 @@ import {
   getStoredSales,
 } from '../utils/storage';
 
-export const DashboardPage: React.FC<{ onNavigateToInventory?: () => void }> = ({
+export const DashboardPage: React.FC<{ onNavigateToInventory?: (filter?: 'all' | 'critical') => void }> = ({
   onNavigateToInventory,
 }) => {
   const [sales, setSales] = useState<Sale[]>(getStoredSales);
@@ -122,6 +122,15 @@ export const DashboardPage: React.FC<{ onNavigateToInventory?: () => void }> = (
   const totalStockCostValue = useMemo(() => {
     return products.reduce((acc, p) => acc + p.stock * p.costPrice, 0);
   }, [products]);
+  const projectedStockProfit = useMemo(() => {
+    return Math.max(0, totalStockRetailValue - totalStockCostValue);
+  }, [totalStockRetailValue, totalStockCostValue]);
+  const projectedMarginPercent = useMemo(() => {
+    return totalStockRetailValue > 0 ? (projectedStockProfit / totalStockRetailValue) * 100 : 0;
+  }, [projectedStockProfit, totalStockRetailValue]);
+  const projectedMarkupPercent = useMemo(() => {
+    return totalStockCostValue > 0 ? (projectedStockProfit / totalStockCostValue) * 100 : 0;
+  }, [projectedStockProfit, totalStockCostValue]);
 
   // Payment methods breakdown
   const paymentBreakdown = useMemo(() => {
@@ -412,7 +421,13 @@ export const DashboardPage: React.FC<{ onNavigateToInventory?: () => void }> = (
         </div>
 
         {/* CARD 4: ESTOQUE CRÍTICO */}
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#0e172a] border border-slate-200/80 dark:border-[#182642] shadow-xs flex flex-col justify-between">
+        <div
+          onClick={() => onNavigateToInventory?.('critical')}
+          className={`p-4 rounded-2xl bg-white dark:bg-[#0e172a] border border-slate-200/80 dark:border-[#182642] shadow-xs flex flex-col justify-between ${
+            onNavigateToInventory ? 'cursor-pointer hover:border-orange-300 dark:hover:border-orange-800 transition-colors' : ''
+          }`}
+          title={onNavigateToInventory ? 'Clique para ver itens com estoque crítico' : undefined}
+        >
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black uppercase tracking-wider text-slate-900 dark:text-slate-200 truncate">
               ESTOQUE CRÍTICO
@@ -431,8 +446,11 @@ export const DashboardPage: React.FC<{ onNavigateToInventory?: () => void }> = (
           {onNavigateToInventory ? (
             <button
               type="button"
-              onClick={onNavigateToInventory}
-              className="text-[10px] font-bold text-[#b45309] dark:text-amber-400 flex items-center gap-0.5 hover:underline text-left cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                onNavigateToInventory('critical');
+              }}
+              className="text-[10px] font-bold text-[#b45309] dark:text-amber-400 flex items-center gap-0.5 hover:underline text-left cursor-pointer active:scale-95 transition-transform"
             >
               <span>Repor estoque</span>
               <ArrowUpRight className="w-3 h-3" />
@@ -551,7 +569,7 @@ export const DashboardPage: React.FC<{ onNavigateToInventory?: () => void }> = (
               topProducts.map((p, idx) => (
                 <div
                   key={idx}
-                  className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-850/60 border border-slate-100 dark:border-[#16233d] flex items-center justify-between gap-2.5 text-xs"
+                  className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#131f38] border border-slate-100 dark:border-[#1a2948] flex items-center justify-between gap-2.5 text-xs"
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <div className="w-5 h-5 rounded-md bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 font-black flex items-center justify-center text-[10px] shrink-0">
@@ -609,7 +627,7 @@ export const DashboardPage: React.FC<{ onNavigateToInventory?: () => void }> = (
               topCategories.map((cat, idx) => (
                 <div
                   key={cat.id}
-                  className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-850/60 border border-slate-100 dark:border-[#16233d] flex items-center justify-between gap-2.5 text-xs"
+                  className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#131f38] border border-slate-100 dark:border-[#1a2948] flex items-center justify-between gap-2.5 text-xs"
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <div className="w-5 h-5 rounded-md bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-black flex items-center justify-center text-[10px] shrink-0">
@@ -663,7 +681,7 @@ export const DashboardPage: React.FC<{ onNavigateToInventory?: () => void }> = (
           {onNavigateToInventory && (
             <button
               type="button"
-              onClick={onNavigateToInventory}
+              onClick={() => onNavigateToInventory('all')}
               className="text-xs font-bold text-[#2563eb] dark:text-sky-400 hover:underline flex items-center gap-1 cursor-pointer transition-colors"
             >
               <span>Ir para Estoque</span>
@@ -673,35 +691,50 @@ export const DashboardPage: React.FC<{ onNavigateToInventory?: () => void }> = (
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {/* Card 1: Total de Produtos */}
-          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-850/60 border border-slate-100 dark:border-[#16233d] flex flex-col justify-between">
+          {/* Card 1: Possível Lucro (Diferença entre Valor de Venda e Custo) */}
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#131f38] border border-slate-100 dark:border-[#1a2948] flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
-                Total de Produtos
+                Possível Lucro
               </span>
-              <div className="w-6 h-6 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-[#2563eb] dark:text-blue-400 flex items-center justify-center shrink-0">
-                <Package className="w-3.5 h-3.5" />
+              <div className="w-6 h-6 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <TrendingUp className="w-3.5 h-3.5" />
               </div>
             </div>
 
             <div className="my-1.5">
-              <span className="text-lg sm:text-xl font-black font-mono text-slate-900 dark:text-white block">
-                {totalProductsCount} itens
+              <span className="text-lg sm:text-xl font-black font-mono text-emerald-600 dark:text-emerald-400 block">
+                {formatCurrency(projectedStockProfit)}
               </span>
             </div>
 
-            <span className="text-[10px] text-slate-400 block truncate">
-              Itens cadastrados no catálogo
-            </span>
+            <div className="flex items-center justify-between text-[11px] pt-0.5">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-400">
+                  MARGEM
+                </span>
+                <span className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-xs">
+                  {projectedMarginPercent.toFixed(1)}%
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-400">
+                  MARKUP
+                </span>
+                <span className="font-mono font-black text-emerald-600 dark:text-emerald-400 text-xs">
+                  {projectedMarkupPercent.toFixed(1)}%
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Card 2: Valor em Estoque */}
-          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-850/60 border border-slate-100 dark:border-[#16233d] flex flex-col justify-between">
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#131f38] border border-slate-100 dark:border-[#1a2948] flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
                 Valor em Estoque
               </span>
-              <div className="w-6 h-6 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <div className="w-6 h-6 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-[#2563eb] dark:text-blue-400 flex items-center justify-center shrink-0">
                 <DollarSign className="w-3.5 h-3.5" />
               </div>
             </div>
@@ -718,7 +751,7 @@ export const DashboardPage: React.FC<{ onNavigateToInventory?: () => void }> = (
           </div>
 
           {/* Card 3: Custo Total do Estoque */}
-          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-850/60 border border-slate-100 dark:border-[#16233d] flex flex-col justify-between">
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#131f38] border border-slate-100 dark:border-[#1a2948] flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
                 Custo Total do Estoque

@@ -1254,6 +1254,7 @@ export const MorePage: React.FC = () => {
         }}
         onSave={handleSaveCustomer}
         initialCustomer={editingCustomer}
+        onDelete={(cust) => setCustomerToDelete(cust)}
       />
 
       {/* Operator Modal */}

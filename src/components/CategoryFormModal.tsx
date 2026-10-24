@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tag, X } from 'lucide-react';
 import { Category } from '../types';
 
@@ -31,6 +31,20 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
   const [color, setColor] = useState(initialCategory?.color || PRESET_COLORS[0]);
   const [error, setError] = useState('');
 
+  // Sync state whenever initialCategory changes or modal opens
+  useEffect(() => {
+    if (isOpen) {
+      if (initialCategory) {
+        setName(initialCategory.name || '');
+        setColor(initialCategory.color || PRESET_COLORS[0]);
+      } else {
+        setName('');
+        setColor(PRESET_COLORS[0]);
+      }
+      setError('');
+    }
+  }, [initialCategory, isOpen]);
+
   if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -54,13 +68,14 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
           type="button"
           onClick={onClose}
           className="absolute top-4 right-4 p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          aria-label="Fechar"
         >
           <X className="w-5 h-5" />
         </button>
 
         <div className="flex items-center gap-3 mb-5">
           <div
-            className="w-10 h-10 rounded-2xl flex items-center justify-center text-white"
+            className="w-10 h-10 rounded-2xl flex items-center justify-center text-white shadow-xs"
             style={{ backgroundColor: color }}
           >
             <Tag className="w-5 h-5" />
@@ -128,7 +143,7 @@ export const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
               type="submit"
               className="px-5 py-2 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md shadow-emerald-600/20 transition-all"
             >
-              Salvar
+              {initialCategory ? 'Salvar Alteração' : 'Salvar'}
             </button>
           </div>
         </form>

@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { Category, Product, UnitType } from '../types';
 import { getStoredCategories, saveStoredCategories } from '../utils/storage';
-import { CameraBarcodeScannerModal } from './CameraBarcodeScannerModal';
+import { BarcodeScannerModal } from './BarcodeScannerModal';
 import { CameraCaptureModal } from './CameraCaptureModal';
 import { ProductImageZoomModal } from './ProductImageZoomModal';
 import { formatCurrency, formatTitleCase } from '../utils/formatters';
@@ -89,7 +89,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
   // Modals & sub-flows
   const [showCameraCapture, setShowCameraCapture] = useState(false);
-  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const [showNewCategoryModal, setShowNewCategoryModal] = useState(false);
   const [newCatName, setNewCatName] = useState('');
   const [newCatColor, setNewCatColor] = useState('#2563eb');
@@ -194,22 +194,22 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150">
-        <div className="relative w-full max-w-md bg-white rounded-3xl text-slate-900 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+        <div className="relative w-full max-w-md bg-white dark:bg-[#0f172a] rounded-3xl text-slate-900 dark:text-slate-100 shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col max-h-[92vh]">
           
           {/* ========================================================
               1. HEADER: Orange Box Icon, Title, Subtitle, Close Button
              ======================================================== */}
-          <div className="p-4 sm:p-5 flex items-center justify-between border-b border-slate-100 bg-white">
+          <div className="p-4 sm:p-5 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-[#0f172a] shrink-0">
             <div className="flex items-center gap-3">
               {/* Orange Package Icon */}
               <div className="w-11 h-11 rounded-2xl bg-[#ff5500] text-white flex items-center justify-center shadow-md shadow-orange-500/20 shrink-0">
                 <Package className="w-5 h-5 stroke-[2.2]" />
               </div>
               <div>
-                <h2 className="text-base sm:text-lg font-extrabold text-slate-900 leading-tight">
+                <h2 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white leading-tight">
                   {initialProduct ? 'Editar Produto' : 'Novo Produto'}
                 </h2>
-                <span className="text-xs text-slate-400 font-medium">
+                <span className="text-xs text-slate-400 dark:text-slate-400 font-medium">
                   Controle de estoque e precificação
                 </span>
               </div>
@@ -219,7 +219,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-800 flex items-center justify-center transition-colors"
+              className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-white flex items-center justify-center transition-colors"
               title="Fechar"
             >
               <X className="w-4 h-4" />
@@ -229,7 +229,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
           {/* Form Content */}
           <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5">
             {error && (
-              <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold">
+              <div className="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 text-xs font-bold">
                 {error}
               </div>
             )}
@@ -243,7 +243,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowImageZoom(true)}
-                  className="relative w-12 h-12 rounded-2xl border border-blue-200 bg-[#f0f4ff] flex items-center justify-center overflow-hidden shrink-0 cursor-zoom-in group active:scale-95 transition-all shadow-2xs"
+                  className="relative w-12 h-12 rounded-2xl border border-blue-200 dark:border-blue-900/60 bg-[#f0f4ff] dark:bg-blue-950/40 flex items-center justify-center overflow-hidden shrink-0 cursor-zoom-in group active:scale-95 transition-all shadow-2xs"
                   title="Clique para ampliar a imagem do produto"
                 >
                   <img
@@ -256,8 +256,8 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   </div>
                 </button>
               ) : (
-                <div className="w-12 h-12 rounded-2xl border border-blue-200 bg-[#f0f4ff] flex items-center justify-center overflow-hidden shrink-0">
-                  <Camera className="w-5 h-5 text-blue-400" />
+                <div className="w-12 h-12 rounded-2xl border border-blue-200 dark:border-blue-900/60 bg-[#f0f4ff] dark:bg-blue-950/40 flex items-center justify-center overflow-hidden shrink-0">
+                  <Camera className="w-5 h-5 text-blue-400 dark:text-blue-400" />
                 </div>
               )}
 
@@ -275,7 +275,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-12 h-12 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 flex items-center justify-center shadow-2xs transition-colors shrink-0"
+                className="w-12 h-12 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-200 flex items-center justify-center shadow-2xs transition-colors shrink-0"
                 title="Enviar arquivo de imagem"
               >
                 <Upload className="w-5 h-5 stroke-[2]" />
@@ -294,7 +294,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 value={imageUrl}
                 onChange={(e) => setImageUrl(e.target.value)}
                 placeholder="Link da imagem (URL)..."
-                className="flex-1 min-w-0 px-3 py-2.5 rounded-2xl border border-slate-200 bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#2563eb] shadow-2xs"
+                className="flex-1 min-w-0 px-3 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-[#2563eb] shadow-2xs"
               />
             </div>
 
@@ -303,7 +303,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                ======================================================== */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-bold text-slate-900 block mb-1">
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-200 block mb-1">
                   Código do Item *
                 </label>
                 <input
@@ -311,19 +311,19 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   value={code.startsWith('#') ? code : `#${code}`}
                   onChange={(e) => setCode(e.target.value.replace(/^#/, ''))}
                   placeholder="#59712"
-                  className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-slate-50/50 text-xs font-bold font-mono text-slate-900 focus:outline-none focus:border-[#2563eb]"
+                  className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900 text-xs font-bold font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#2563eb]"
                   required
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-900 block mb-1">
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-200 block mb-1">
                   Unidade
                 </label>
                 <select
                   value={unit}
                   onChange={(e) => setUnit(e.target.value as UnitType)}
-                  className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-white text-xs font-bold text-slate-900 focus:outline-none focus:border-[#2563eb]"
+                  className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#2563eb]"
                 >
                   <option value="un">UN (Unidade)</option>
                   <option value="kg">KG (Quilo)</option>
@@ -341,7 +341,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 4. ROW: Nome do Produto
                ======================================================== */}
             <div>
-              <label className="text-xs font-bold text-slate-900 block mb-1">
+              <label className="text-xs font-bold text-slate-900 dark:text-slate-200 block mb-1">
                 Nome do Produto *
               </label>
               <input
@@ -349,7 +349,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 value={name}
                 onChange={handleNameChange}
                 placeholder="Ex: Lápis Ped Irwin, Cimento Cp-II..."
-                className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-white text-xs font-bold text-slate-900 placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:border-[#2563eb]"
+                className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold text-slate-900 dark:text-slate-100 placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:border-[#2563eb]"
                 required
                 autoFocus={!initialProduct}
               />
@@ -360,7 +360,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                ======================================================== */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-bold text-slate-900 block mb-1">
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-200 block mb-1">
                   Preço de Venda *
                 </label>
                 <input
@@ -369,12 +369,12 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   value={sellPrice !== null && sellPrice > 0 ? formatCurrency(sellPrice) : ''}
                   onChange={handlePriceChange(setSellPrice)}
                   placeholder="R$ 0,00"
-                  className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-white text-xs sm:text-sm font-black font-mono text-slate-900 focus:outline-none focus:border-[#2563eb] shadow-2xs"
+                  className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs sm:text-sm font-black font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#2563eb] shadow-2xs"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-900 block mb-1">
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-200 block mb-1">
                   Preço de Custo
                 </label>
                 <input
@@ -383,36 +383,36 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   value={costPrice !== null && costPrice > 0 ? formatCurrency(costPrice) : ''}
                   onChange={handlePriceChange(setCostPrice)}
                   placeholder="R$ 0,00"
-                  className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-white text-xs sm:text-sm font-black font-mono text-slate-900 focus:outline-none focus:border-[#2563eb] shadow-2xs"
+                  className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs sm:text-sm font-black font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#2563eb] shadow-2xs"
                 />
               </div>
             </div>
 
-            {/* Banner: LUCRO, MARGEM e MARKUP (metade da altura vertical) */}
-            <div className="py-1.5 px-3 rounded-2xl bg-[#ecfdf5] border border-[#a7f3d0] grid grid-cols-3 text-center shadow-2xs">
+            {/* Banner: LUCRO, MARGEM e MARKUP */}
+            <div className="py-1.5 px-3 rounded-2xl bg-[#ecfdf5] dark:bg-emerald-950/30 border border-[#a7f3d0] dark:border-emerald-900/60 grid grid-cols-3 text-center shadow-2xs">
               <div>
-                <span className="text-[9px] font-black uppercase tracking-wider text-[#065f46] block leading-none">
+                <span className="text-[9px] font-black uppercase tracking-wider text-[#065f46] dark:text-emerald-400 block leading-none">
                   LUCRO
                 </span>
-                <span className="text-xs font-black font-mono text-[#065f46] block leading-tight mt-0.5">
+                <span className="text-xs font-black font-mono text-[#065f46] dark:text-emerald-300 block leading-tight mt-0.5">
                   {formatCurrency(profitValue)}
                 </span>
               </div>
 
               <div>
-                <span className="text-[9px] font-black uppercase tracking-wider text-[#065f46] block leading-none">
+                <span className="text-[9px] font-black uppercase tracking-wider text-[#065f46] dark:text-emerald-400 block leading-none">
                   MARGEM
                 </span>
-                <span className="text-xs font-black font-mono text-[#065f46] block leading-tight mt-0.5">
+                <span className="text-xs font-black font-mono text-[#065f46] dark:text-emerald-300 block leading-tight mt-0.5">
                   {marginPercent.toFixed(1)}%
                 </span>
               </div>
 
               <div>
-                <span className="text-[9px] font-black uppercase tracking-wider text-[#065f46] block leading-none">
+                <span className="text-[9px] font-black uppercase tracking-wider text-[#065f46] dark:text-emerald-400 block leading-none">
                   MARKUP
                 </span>
-                <span className="text-xs font-black font-mono text-[#065f46] block leading-tight mt-0.5">
+                <span className="text-xs font-black font-mono text-[#065f46] dark:text-emerald-300 block leading-tight mt-0.5">
                   {markupPercent.toFixed(1)}%
                 </span>
               </div>
@@ -424,14 +424,14 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
             <div className="grid grid-cols-2 gap-3">
               {/* Estoque Atual */}
               <div>
-                <label className="text-xs font-bold text-slate-900 block mb-1">
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-200 block mb-1">
                   Estoque Atual *
                 </label>
-                <div className="rounded-2xl border border-blue-200 bg-[#f0f6ff] p-1 flex items-center justify-between shadow-2xs">
+                <div className="rounded-2xl border border-blue-200 dark:border-blue-900/60 bg-[#f0f6ff] dark:bg-[#111c33] p-1 flex items-center justify-between shadow-2xs">
                   <button
                     type="button"
                     onClick={() => setStock((prev) => Math.max(0, prev - 1))}
-                    className="w-7 h-7 rounded-xl bg-white text-blue-600 hover:bg-blue-50 flex items-center justify-center font-bold shadow-2xs transition-all active:scale-95 shrink-0"
+                    className="w-7 h-7 rounded-xl bg-white dark:bg-[#1a2947] text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-[#22355c] flex items-center justify-center font-bold shadow-2xs transition-all active:scale-95 shrink-0"
                     title="Diminuir"
                   >
                     -
@@ -448,10 +448,10 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                         setStock(isNaN(parsed) ? 0 : Math.max(0, parsed));
                       }}
                       onFocus={(e) => e.target.select()}
-                      className="w-11 text-center bg-transparent hover:bg-white/60 focus:bg-white text-xs font-black text-slate-900 font-mono rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 py-0.5 transition-colors cursor-text"
+                      className="w-11 text-center bg-transparent hover:bg-white/60 dark:hover:bg-white/10 focus:bg-white dark:focus:bg-[#1a2947] text-xs font-black text-slate-900 dark:text-white font-mono rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 py-0.5 transition-colors cursor-text"
                       title="Clique para digitar a quantidade"
                     />
-                    <span className="text-[10px] text-slate-500 uppercase font-bold shrink-0">
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold shrink-0">
                       {unit}
                     </span>
                   </div>
@@ -469,14 +469,14 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
               {/* Estoque Mínimo */}
               <div>
-                <label className="text-xs font-bold text-slate-900 block mb-1">
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-200 block mb-1">
                   Estoque Mínimo
                 </label>
-                <div className="rounded-2xl border border-blue-200 bg-[#f0f6ff] p-1 flex items-center justify-between shadow-2xs">
+                <div className="rounded-2xl border border-blue-200 dark:border-blue-900/60 bg-[#f0f6ff] dark:bg-[#111c33] p-1 flex items-center justify-between shadow-2xs">
                   <button
                     type="button"
                     onClick={() => setMinStock((prev) => Math.max(0, prev - 1))}
-                    className="w-7 h-7 rounded-xl bg-white text-blue-600 hover:bg-blue-50 flex items-center justify-center font-bold shadow-2xs transition-all active:scale-95 shrink-0"
+                    className="w-7 h-7 rounded-xl bg-white dark:bg-[#1a2947] text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-[#22355c] flex items-center justify-center font-bold shadow-2xs transition-all active:scale-95 shrink-0"
                     title="Diminuir"
                   >
                     -
@@ -493,10 +493,10 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                         setMinStock(isNaN(parsed) ? 0 : Math.max(0, parsed));
                       }}
                       onFocus={(e) => e.target.select()}
-                      className="w-11 text-center bg-transparent hover:bg-white/60 focus:bg-white text-xs font-black text-slate-900 font-mono rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 py-0.5 transition-colors cursor-text"
+                      className="w-11 text-center bg-transparent hover:bg-white/60 dark:hover:bg-white/10 focus:bg-white dark:focus:bg-[#1a2947] text-xs font-black text-slate-900 dark:text-white font-mono rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 py-0.5 transition-colors cursor-text"
                       title="Clique para digitar a quantidade"
                     />
-                    <span className="text-[10px] text-slate-500 uppercase font-bold shrink-0">
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold shrink-0">
                       {unit}
                     </span>
                   </div>
@@ -518,13 +518,13 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                ======================================================== */}
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-bold text-slate-900">
+                <label className="text-xs font-bold text-slate-900 dark:text-slate-200">
                   Categoria
                 </label>
                 <button
                   type="button"
                   onClick={() => setShowNewCategoryModal(true)}
-                  className="text-xs font-bold text-[#2563eb] hover:underline flex items-center gap-1"
+                  className="text-xs font-bold text-[#2563eb] dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
                 >
                   <Plus className="w-3 h-3" />
                   <span>Nova Categoria</span>
@@ -535,7 +535,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="flex-1 min-w-0 px-3.5 py-2.5 rounded-2xl border border-slate-200 bg-white text-xs font-bold text-slate-900 focus:outline-none focus:border-[#2563eb]"
+                  className="flex-1 min-w-0 px-3.5 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#2563eb]"
                 >
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -547,7 +547,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowNewCategoryModal(true)}
-                  className="w-10 h-10 rounded-2xl border border-blue-200 bg-[#eff6ff] text-[#2563eb] hover:bg-blue-100 flex items-center justify-center font-bold shadow-2xs shrink-0 transition-colors"
+                  className="w-10 h-10 rounded-2xl border border-blue-200 dark:border-blue-900/60 bg-[#eff6ff] dark:bg-blue-950/40 text-[#2563eb] dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/60 flex items-center justify-center font-bold shadow-2xs shrink-0 transition-colors"
                   title="Adicionar nova categoria"
                 >
                   <Plus className="w-4 h-4 stroke-[2.5]" />
@@ -559,10 +559,10 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 8. ROW: Código de Barras (EAN) & Botão LER
                ======================================================== */}
             <div>
-              <label className="text-xs font-bold text-slate-900 block mb-1">
+              <label className="text-xs font-bold text-slate-900 dark:text-slate-200 block mb-1">
                 Código de Barras (EAN)
               </label>
-              <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-1 pl-3.5 flex items-center justify-between gap-2 shadow-2xs">
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900 p-1 pl-3.5 flex items-center justify-between gap-2 shadow-2xs">
                 <input
                   type="text"
                   value={barcode}
@@ -579,14 +579,14 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                     }
                   }}
                   placeholder="7896541364845"
-                  className="flex-1 min-w-0 bg-transparent text-xs font-bold font-mono text-slate-900 focus:outline-none"
+                  className="flex-1 min-w-0 bg-transparent text-xs font-bold font-mono text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none"
                 />
 
                 {barcode && (
                   <button
                     type="button"
                     onClick={() => setBarcode('')}
-                    className="p-1 text-slate-400 hover:text-slate-600"
+                    className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -595,8 +595,8 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 {/* Orange Ler Barcode Button */}
                 <button
                   type="button"
-                  onClick={() => setShowBarcodeScanner(true)}
-                  className="px-3 py-1.5 rounded-xl bg-[#ff5500] hover:bg-[#ea4e00] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors shrink-0"
+                  onClick={() => setScannerOpen(true)}
+                  className="px-3 py-1.5 rounded-xl bg-[#ff5500] hover:bg-[#ea4e00] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors shrink-0 cursor-pointer active:scale-95"
                 >
                   <Barcode className="w-3.5 h-3.5 stroke-[2.5]" />
                   <span>Ler</span>
@@ -624,13 +624,13 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
       {/* New Category Modal */}
       {showNewCategoryModal && (
         <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in">
-          <div className="w-full max-w-xs bg-white rounded-3xl p-5 shadow-2xl space-y-3">
+          <div className="w-full max-w-xs bg-white dark:bg-[#0f172a] rounded-3xl p-5 shadow-2xl space-y-3 border border-slate-200 dark:border-slate-800">
             <div className="flex items-center justify-between">
-              <h3 className="font-extrabold text-sm text-slate-900">Nova Categoria</h3>
+              <h3 className="font-extrabold text-sm text-slate-900 dark:text-white">Nova Categoria</h3>
               <button
                 type="button"
                 onClick={() => setShowNewCategoryModal(false)}
-                className="p-1 text-slate-400 hover:text-slate-600"
+                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -638,7 +638,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
             <form onSubmit={handleCreateCategory} className="space-y-3">
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
                   Nome da Categoria
                 </label>
                 <input
@@ -646,14 +646,14 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   value={newCatName}
                   onChange={(e) => setNewCatName(formatTitleCase(e.target.value))}
                   placeholder="Ex: Tintas, Elétrica..."
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:border-[#2563eb]"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-[#2563eb]"
                   autoFocus
                   required
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">
                   Cor de Identificação
                 </label>
                 <div className="flex items-center gap-2">
@@ -663,7 +663,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                       type="button"
                       onClick={() => setNewCatColor(c)}
                       className={`w-6 h-6 rounded-full transition-transform ${
-                        newCatColor === c ? 'scale-125 ring-2 ring-slate-900 ring-offset-2' : ''
+                        newCatColor === c ? 'scale-125 ring-2 ring-slate-900 dark:ring-white ring-offset-2 dark:ring-offset-slate-900' : ''
                       }`}
                       style={{ backgroundColor: c }}
                     />
@@ -675,7 +675,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowNewCategoryModal(false)}
-                  className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-100"
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   Cancelar
                 </button>
@@ -698,11 +698,13 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
         onCapture={(img) => setImageUrl(img)}
       />
 
-      {/* Camera Barcode Scanner Modal */}
-      <CameraBarcodeScannerModal
-        isOpen={showBarcodeScanner}
-        onClose={() => setShowBarcodeScanner(false)}
-        onDetected={(scanned) => setBarcode(scanned)}
+      {/* Barcode Scanner Modal */}
+      <BarcodeScannerModal
+        isOpen={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScan={(codigo) => {
+          setBarcode(codigo);
+        }}
       />
 
       {/* Product Image Zoom Modal */}

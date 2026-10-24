@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
+  AlertTriangle,
   Barcode,
+  Check,
   Edit2,
   FileSpreadsheet,
   Minus,
@@ -11,7 +13,7 @@ import {
   X,
   ZoomIn,
 } from 'lucide-react';
-import { CameraBarcodeScannerModal } from '../components/CameraBarcodeScannerModal';
+import { BarcodeScannerModal } from '../components/BarcodeScannerModal';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { ProductFormModal } from '../components/ProductFormModal';
 import { ProductImageZoomModal } from '../components/ProductImageZoomModal';
@@ -24,10 +26,33 @@ import {
   saveStoredProducts,
 } from '../utils/storage';
 
-export const InventoryPage: React.FC = () => {
+interface InventoryPageProps {
+  initialFilter?: 'all' | 'critical';
+  onFilterChange?: (filter: 'all' | 'critical') => void;
+}
+
+export const InventoryPage: React.FC<InventoryPageProps> = ({
+  initialFilter = 'all',
+  onFilterChange,
+}) => {
   const [products, setProducts] = useState<Product[]>(getStoredProducts);
   const [categories, setCategories] = useState<Category[]>(getStoredCategories);
   const [search, setSearch] = useState('');
+  const [stockFilter, setStockFilter] = useState<'all' | 'critical'>(initialFilter);
+
+  // Sync if initialFilter changes externally (e.g. clicked "Repor estoque" in Dashboard)
+  useEffect(() => {
+    setStockFilter(initialFilter);
+  }, [initialFilter]);
+
+  const handleSetStockFilter = (filter: 'all' | 'critical') => {
+    setStockFilter(filter);
+    onFilterChange?.(filter);
+  };
+
+  const criticalCount = useMemo(() => {
+    return products.filter((p) => p.stock <= p.minStock).length;
+  }, [products]);
 
   // Modals
   const [showProductModal, setShowProductModal] = useState(false);
@@ -49,8 +74,12 @@ export const InventoryPage: React.FC = () => {
 
   // Filtered and ranked products with semantic, partial & intent matching
   const filteredProducts = useMemo(() => {
-    return filterAndRankProducts(products, search);
-  }, [products, search]);
+    const list = filterAndRankProducts(products, search);
+    if (stockFilter === 'critical') {
+      return list.filter((p) => p.stock <= p.minStock);
+    }
+    return list;
+  }, [products, search, stockFilter]);
 
 
   const handleSaveProduct = (
@@ -229,7 +258,11 @@ export const InventoryPage: React.FC = () => {
             return (
               <div
                 key={product.id}
-                className="p-3 rounded-2xl bg-white dark:bg-[#0e172a] border border-slate-200/90 dark:border-[#1a2846] hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs transition-all space-y-2"
+                className={`p-3 rounded-2xl bg-white dark:bg-[#0e172a] border ${
+                  product.stock <= product.minStock
+                    ? 'border-orange-300 dark:border-orange-900/60 shadow-xs'
+                    : 'border-slate-200/90 dark:border-[#1a2846]'
+                } hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs transition-all space-y-2`}
               >
                 {/* Top Info Row */}
                 <div className="flex items-start gap-2.5">
@@ -282,11 +315,17 @@ export const InventoryPage: React.FC = () => {
                       <span>Custo: {formatCurrency(product.costPrice)}</span>
                     </div>
 
-                    {/* Line 3: Lucro badge & EAN */}
+                    {/* Line 3: Lucro badge, Critical stock alert & EAN */}
                     <div className="mt-1 flex items-center gap-1.5 flex-wrap text-[11px]">
                       <span className="px-1.5 py-0.5 rounded-md bg-[#f0fdf4] dark:bg-emerald-950/40 text-[#16a34a] dark:text-emerald-400 border border-[#bbf7d0] dark:border-emerald-900/50 font-bold text-[10px] inline-flex items-center">
                         Lucro: {formatCurrency(profit)} ({profitPct.toFixed(1)}%)
                       </span>
+                      {product.stock <= product.minStock && (
+                        <span className="px-1.5 py-0.5 rounded-md bg-orange-50 dark:bg-orange-950/50 text-[#c2410c] dark:text-orange-400 border border-orange-200 dark:border-orange-900/50 font-bold text-[10px] inline-flex items-center gap-1">
+                          <AlertTriangle className="w-2.5 h-2.5 stroke-[2.2]" />
+                          {product.stock === 0 ? 'Esgotado' : `Estoque Crítico (Mín: ${product.minStock})`}
+                        </span>
+                      )}
                       <span className="text-slate-300 dark:text-slate-700">•</span>
                       <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
                         EAN : {product.barcode || 'Não cadastrado'}
@@ -380,11 +419,11 @@ export const InventoryPage: React.FC = () => {
         isDestructive
       />
 
-      {/* Camera Barcode Scanner Modal (abre direto a câmera) */}
-      <CameraBarcodeScannerModal
+      {/* Barcode Scanner Modal */}
+      <BarcodeScannerModal
         isOpen={showBarcodeScanner}
         onClose={() => setShowBarcodeScanner(false)}
-        onDetected={(code) => setSearch(code)}
+        onScan={(code) => setSearch(code)}
       />
 
       {/* Product Image Zoom Modal */}

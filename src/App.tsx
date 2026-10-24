@@ -17,6 +17,7 @@ function AppContent() {
   useFirestoreSync();
   const { isAdmin } = useAuth();
   const [currentTab, setCurrentTab] = useState<NavTab>('pdv');
+  const [inventoryFilter, setInventoryFilter] = useState<'all' | 'critical'>('all');
 
   // Restrict non-admin operators to only 'pdv', 'inventory', and 'sales'
   useEffect(() => {
@@ -29,7 +30,15 @@ function AppContent() {
     if (!isAdmin && (tab === 'inicio' || tab === 'more')) {
       return;
     }
+    if (tab === 'inventory') {
+      setInventoryFilter('all');
+    }
     setCurrentTab(tab);
+  };
+
+  const handleNavigateToInventory = (filter: 'all' | 'critical' = 'critical') => {
+    setInventoryFilter(filter);
+    setCurrentTab('inventory');
   };
 
   return (
@@ -38,10 +47,15 @@ function AppContent() {
 
       <main className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
         {currentTab === 'inicio' && isAdmin && (
-          <DashboardPage onNavigateToInventory={() => setCurrentTab('inventory')} />
+          <DashboardPage onNavigateToInventory={handleNavigateToInventory} />
         )}
         {currentTab === 'pdv' && <PDVPage />}
-        {currentTab === 'inventory' && <InventoryPage />}
+        {currentTab === 'inventory' && (
+          <InventoryPage
+            initialFilter={inventoryFilter}
+            onFilterChange={setInventoryFilter}
+          />
+        )}
         {currentTab === 'sales' && <SalesHistoryPage />}
         {currentTab === 'more' && isAdmin && <MorePage />}
       </main>
