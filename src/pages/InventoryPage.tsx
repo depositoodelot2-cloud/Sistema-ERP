@@ -9,6 +9,7 @@ import {
   Package,
   Plus,
   Search,
+  Sparkles,
   Trash2,
   X,
   ZoomIn,
@@ -17,6 +18,7 @@ import { BarcodeScannerModal } from '../components/BarcodeScannerModal';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { ProductFormModal } from '../components/ProductFormModal';
 import { ProductImageZoomModal } from '../components/ProductImageZoomModal';
+import { StandardizeNamesModal } from '../components/StandardizeNamesModal';
 import { Category, Product } from '../types';
 import { formatCurrency } from '../utils/formatters';
 import { filterAndRankProducts } from '../utils/semanticSearch';
@@ -60,6 +62,7 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [zoomedProduct, setZoomedProduct] = useState<Product | null>(null);
+  const [showStandardizeModal, setShowStandardizeModal] = useState(false);
 
   useEffect(() => {
     const handleProductsChange = () => setProducts(getStoredProducts());
@@ -181,6 +184,16 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({
           </h1>
 
           <div className="flex items-center gap-2">
+            {/* Padronizar Nomes Button */}
+            <button
+              type="button"
+              onClick={() => setShowStandardizeModal(true)}
+              className="w-10 h-10 rounded-2xl border border-slate-200 dark:border-[#1e2f52] bg-white dark:bg-[#0e172a] text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-[#191e38] flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
+              title="Padronizar nomes de produtos (maiúsculas)"
+            >
+              <Sparkles className="w-5 h-5 stroke-[1.8]" />
+            </button>
+
             {/* Export to CSV / Spreadsheet Button */}
             <button
               type="button"
@@ -293,7 +306,7 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({
                   <div className="flex-1 min-w-0">
                     {/* Line 1: Name, Code badge, Category badge */}
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white uppercase truncate">
+                      <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white truncate">
                         {product.name}
                       </h3>
                       <span className="px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-[#152342] text-slate-600 dark:text-slate-300 font-mono text-[10px] font-bold border border-slate-200/80 dark:border-[#1e3056]">
@@ -431,6 +444,16 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({
         isOpen={Boolean(zoomedProduct)}
         product={zoomedProduct}
         onClose={() => setZoomedProduct(null)}
+      />
+
+      {/* Standardize Names Modal */}
+      <StandardizeNamesModal
+        isOpen={showStandardizeModal}
+        onClose={() => setShowStandardizeModal(false)}
+        products={products}
+        onSuccess={() => {
+          setProducts(getStoredProducts());
+        }}
       />
     </div>
   );

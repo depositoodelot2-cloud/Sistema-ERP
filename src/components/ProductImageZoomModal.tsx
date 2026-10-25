@@ -95,7 +95,7 @@ export const ProductImageZoomModal: React.FC<ProductImageZoomModalProps> = ({
               </span>
             )}
             <h3
-              className="text-sm sm:text-base font-black text-slate-900 dark:text-white uppercase truncate"
+              className="text-sm sm:text-base font-black text-slate-900 dark:text-white truncate"
               title={displayName}
             >
               {displayName}

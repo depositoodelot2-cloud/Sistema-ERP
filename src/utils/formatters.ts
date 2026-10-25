@@ -110,11 +110,67 @@ export const getPaymentMethodLabel = (method: PaymentMethod): string => {
 /**
  * Capitalizes only the first letter of each word in a string,
  * keeping the remaining letters lowercase (Title Case).
- * E.g.: "coca-cola 2l" -> "Coca-Cola 2l", "LÁPIS PED IRWIN" -> "Lápis Ped Irwin"
  */
 export const formatTitleCase = (value: string): string => {
   if (!value) return '';
   return value.toLowerCase().replace(/(^|[^\p{L}\p{N}])(\p{L})/gu, (_match, boundary, char) => {
     return boundary + char.toUpperCase();
   });
+};
+
+/**
+ * Capitalizes the first letter of each word in real-time while typing,
+ * WITHOUT forcing lowercase on remaining letters (so user can type acronyms like PVC, LED, EPI).
+ */
+export const formatCapitalizeWords = (value: string): string => {
+  if (!value) return '';
+  return value.replace(/(^|[\s\-\/\.])([a-z\u00E0-\u00FC])/gu, (_match, boundary, char) => {
+    return boundary + char.toUpperCase();
+  });
+};
+
+/**
+ * Checks if a string has alphabetic characters and all of them are uppercase.
+ */
+export const isAllUpper = (str: string): boolean => {
+  const letters = str.replace(/[^\p{L}]/gu, '');
+  return letters.length > 0 && letters === letters.toUpperCase();
+};
+
+/**
+ * Common abbreviations and acronyms that should remain UPPERCASE.
+ */
+export const KNOWN_UPPERCASE_ACRONYMS = new Set([
+  'PVC', 'EPI', 'LED', 'CP', 'CPII', 'CP-II', 'RG', 'CPF', 'CNPJ',
+  'UN', 'PCT', 'CX', 'MM', 'CM', 'KG', 'LT', 'ML', 'V', 'W', 'A',
+  'TIGRE', 'IRWIN', 'AVANT', 'MEGATRON', 'INTECH', 'AMBILUX', 'LORENZETTI', 'EAN'
+]);
+
+/**
+ * Converts ONLY completely uppercase names to Title Case,
+ * while preserving known acronyms (PVC, EPI, LED, etc.) and number notations.
+ */
+export const standardizeUppercaseName = (name: string): string => {
+  if (!isAllUpper(name)) return name;
+
+  // Split tokens by spaces or delimiters
+  const tokens = name.split(/(\s+|[-/.,])/);
+  const formatted = tokens.map((token) => {
+    if (!token || /^(\s+|[-/.,]+)$/.test(token)) return token;
+
+    const upper = token.toUpperCase();
+    if (KNOWN_UPPERCASE_ACRONYMS.has(upper)) {
+      return upper;
+    }
+
+    // Preserve numbers combined with measure units (e.g. 32MM, 20W, 220V)
+    if (/^\d+[A-Z]+$/i.test(token)) {
+      return token.toUpperCase();
+    }
+
+    // Capitalize first letter, lowercase the rest
+    return token.charAt(0).toUpperCase() + token.slice(1).toLowerCase();
+  });
+
+  return formatted.join('');
 };

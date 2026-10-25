@@ -55,6 +55,7 @@ export const PDVPage: React.FC = () => {
   const [showReceipt, setShowReceipt] = useState(false);
   const [scanAlert, setScanAlert] = useState<string | null>(null);
   const [zoomedProduct, setZoomedProduct] = useState<Product | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
   // Hardware barcode scanner listener (USB/Bluetooth scanners send keystrokes and Enter)
   useEffect(() => {
@@ -174,8 +175,8 @@ export const PDVPage: React.FC = () => {
               {topCartItem ? topCartItem.quantity : 0}
             </div>
             <div className="min-w-0 flex-1">
-              <span className="text-[11px] font-black text-slate-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-200 uppercase block truncate leading-tight transition-colors">
-                {topCartItem ? topCartItem.product.name : 'SEM ITENS'}
+              <span className="text-[11px] font-black text-slate-800 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-200 block truncate leading-tight transition-colors">
+                {topCartItem ? topCartItem.product.name : 'Sem itens'}
               </span>
               <div className="text-[10px] font-mono leading-tight mt-0.5">
                 <span className="text-[#2563eb] dark:text-[#3b82f6] font-bold">
@@ -354,13 +355,17 @@ export const PDVPage: React.FC = () => {
           filteredProducts.map((product) => {
             const inCartQty = getProductCartQty(product.id);
             const isInCart = inCartQty > 0;
+            const isSelected = selectedProductId === product.id;
 
             return (
               <div
                 key={product.id}
-                className={`p-2.5 sm:p-3 rounded-2xl flex items-center justify-between gap-2.5 transition-all ${
+                onClick={() => setSelectedProductId(product.id)}
+                className={`p-2.5 sm:p-3 rounded-2xl flex items-center justify-between gap-2.5 transition-all cursor-pointer ${
                   isInCart
                     ? 'bg-blue-50/70 dark:bg-[#0c1527] border-2 border-[#2563eb] shadow-[0_0_15px_rgba(37,99,235,0.18)]'
+                    : isSelected
+                    ? 'bg-blue-50/40 dark:bg-[#0c1830] border-2 border-[#2563eb]/70 shadow-xs'
                     : 'bg-white dark:bg-[#0c1527] border border-slate-200 dark:border-[#16233d] hover:border-slate-300 dark:hover:border-[#22355c] shadow-2xs'
                 }`}
               >
@@ -404,7 +409,7 @@ export const PDVPage: React.FC = () => {
                   <span className="text-[10px] font-mono text-slate-400 block leading-tight">
                     ##{product.code}
                   </span>
-                  <h3 className="text-xs sm:text-sm font-black text-slate-800 dark:text-white uppercase block truncate leading-tight">
+                  <h3 className="text-xs sm:text-sm font-black text-slate-800 dark:text-white block truncate leading-tight">
                     {product.name}
                   </h3>
                   <span className="text-[10px] font-black text-emerald-600 dark:text-[#00c076] uppercase block mt-0.5 tracking-wide">
@@ -413,7 +418,7 @@ export const PDVPage: React.FC = () => {
                 </div>
 
                 {/* Right: Price & Stepper or Add Button */}
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                   <span className="text-xs sm:text-sm font-black font-mono text-[#2563eb] dark:text-[#3b82f6]">
                     {formatCurrency(product.sellPrice)}
                   </span>
@@ -440,16 +445,16 @@ export const PDVPage: React.FC = () => {
                         <Plus className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                  ) : (
+                  ) : isSelected ? (
                     <button
                       type="button"
                       onClick={() => addItem(product, 1)}
-                      className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-[#111e3b] hover:bg-[#2563eb] text-[#2563eb] dark:text-[#3b82f6] hover:text-white border border-blue-200 dark:border-[#1e325c] hover:border-transparent flex items-center justify-center transition-all active:scale-95 shadow-xs"
+                      className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-[#111e3b] hover:bg-[#2563eb] text-[#2563eb] dark:text-[#3b82f6] hover:text-white border border-blue-200 dark:border-[#1e325c] hover:border-transparent flex items-center justify-center transition-all active:scale-95 shadow-xs animate-in zoom-in-75 duration-150"
                       title="Adicionar ao carrinho"
                     >
                       <Plus className="w-4 h-4" />
                     </button>
-                  )}
+                  ) : null}
                 </div>
               </div>
             );
@@ -460,13 +465,17 @@ export const PDVPage: React.FC = () => {
             {filteredProducts.map((product) => {
               const inCartQty = getProductCartQty(product.id);
               const isInCart = inCartQty > 0;
+              const isSelected = selectedProductId === product.id;
 
               return (
                 <div
                   key={product.id}
-                  className={`p-3 rounded-2xl flex flex-col justify-between transition-all ${
+                  onClick={() => setSelectedProductId(product.id)}
+                  className={`p-3 rounded-2xl flex flex-col justify-between transition-all cursor-pointer ${
                     isInCart
                       ? 'bg-blue-50/70 dark:bg-[#0c1527] border-2 border-[#2563eb] shadow-[0_0_15px_rgba(37,99,235,0.18)]'
+                      : isSelected
+                      ? 'bg-blue-50/40 dark:bg-[#0c1830] border-2 border-[#2563eb]/70 shadow-xs'
                       : 'bg-white dark:bg-[#0c1527] border border-slate-200 dark:border-[#16233d] shadow-2xs'
                   }`}
                 >
@@ -501,7 +510,7 @@ export const PDVPage: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    <h3 className="text-xs font-black text-slate-800 dark:text-white uppercase line-clamp-2 leading-tight">
+                    <h3 className="text-xs font-black text-slate-800 dark:text-white line-clamp-2 leading-tight">
                       {product.name}
                     </h3>
                     <span className="text-[10px] font-black text-emerald-600 dark:text-[#00c076] uppercase block mt-1">
@@ -509,17 +518,20 @@ export const PDVPage: React.FC = () => {
                     </span>
                   </div>
 
-                  <div className="mt-3 pt-2 border-t border-slate-100 dark:border-[#16233d] flex items-center justify-between gap-1">
+                  <div className="mt-3 pt-2 border-t border-slate-100 dark:border-[#16233d] flex items-center justify-between gap-1" onClick={(e) => e.stopPropagation()}>
                     <span className="text-xs font-black font-mono text-[#2563eb] dark:text-[#3b82f6]">
                       {formatCurrency(product.sellPrice)}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => addItem(product, 1)}
-                      className="w-7 h-7 rounded-xl bg-[#2563eb] text-white flex items-center justify-center active:scale-95 shadow-xs"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                    </button>
+                    {isSelected && (
+                      <button
+                        type="button"
+                        onClick={() => addItem(product, 1)}
+                        className="w-7 h-7 rounded-xl bg-[#2563eb] text-white flex items-center justify-center active:scale-95 shadow-xs animate-in zoom-in-75 duration-150"
+                        title="Adicionar ao carrinho"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
               );

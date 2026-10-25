@@ -14,7 +14,7 @@ import { getStoredCategories, saveStoredCategories } from '../utils/storage';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
 import { CameraCaptureModal } from './CameraCaptureModal';
 import { ProductImageZoomModal } from './ProductImageZoomModal';
-import { formatCurrency, formatTitleCase } from '../utils/formatters';
+import { formatCapitalizeWords, formatCurrency, formatTitleCase } from '../utils/formatters';
 import { playScannerBeep, validateBarcode } from '../utils/barcodeValidator';
 
 interface ProductFormModalProps {
@@ -161,7 +161,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.target;
     const cursor = input.selectionStart;
-    const formatted = formatTitleCase(input.value);
+    const formatted = formatCapitalizeWords(input.value);
     setName(formatted);
     if (cursor !== null) {
       requestAnimationFrame(() => {
@@ -205,7 +205,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
     onSave({
       code: code.trim().replace(/^#/, ''),
       barcode: barcode.trim(),
-      name: formatTitleCase(name.trim()),
+      name: name.trim(),
       description: initialProduct?.description || '',
       category: category || categories[0]?.id || '',
       costPrice: currentCost,
@@ -374,6 +374,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
               </label>
               <input
                 type="text"
+                autoCapitalize="words"
                 value={name}
                 onChange={handleNameChange}
                 placeholder="Ex: Lápis Ped Irwin, Cimento Cp-II..."

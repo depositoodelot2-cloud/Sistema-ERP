@@ -267,7 +267,7 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
                 >
                   {/* Name and Price breakdown */}
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase block truncate leading-tight">
+                    <h3 className="text-sm font-black text-slate-900 dark:text-white block truncate leading-tight">
                       {item.product.name}
                     </h3>
                     <div className="text-xs text-slate-500 dark:text-slate-400 font-mono mt-1 flex items-center gap-1.5 flex-wrap">

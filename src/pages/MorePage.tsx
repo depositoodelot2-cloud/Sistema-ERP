@@ -12,6 +12,7 @@ import {
   Save,
   Search,
   Shield,
+  Sparkles,
   Tag,
   Trash2,
   Upload,
@@ -25,6 +26,7 @@ import { CategoryFormModal } from '../components/CategoryFormModal';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { CustomerFormModal } from '../components/CustomerFormModal';
 import { ReceiptModal } from '../components/ReceiptModal';
+import { StandardizeNamesModal } from '../components/StandardizeNamesModal';
 import { UserFormModal } from '../components/UserFormModal';
 import { useAuth } from '../hooks/useAuth';
 import { Category, Customer, Operator, Sale, StoreSettings } from '../types';
@@ -80,6 +82,7 @@ export const MorePage: React.FC = () => {
   const [printerSaveSuccess, setPrinterSaveSuccess] = useState(false);
   const [showTestReceiptModal, setShowTestReceiptModal] = useState(false);
   const [backupMessage, setBackupMessage] = useState<string | null>(null);
+  const [showStandardizeModal, setShowStandardizeModal] = useState(false);
 
   useEffect(() => {
     const handleCust = () => setCustomers(getStoredCustomers());
@@ -1046,6 +1049,27 @@ export const MorePage: React.FC = () => {
               </button>
             </div>
 
+            {/* Padronizar Nomes */}
+            <div className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-purple-50/60 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900/50">
+              <div>
+                <h4 className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                  <span>Padronizar Nomes de Produtos</span>
+                </h4>
+                <p className="text-[11px] text-slate-500">
+                  Converte produtos em maiúsculas para formato legível com backup JSON prévio
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowStandardizeModal(true)}
+                className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold flex items-center gap-1.5 shrink-0 shadow-xs active:scale-95 transition-all cursor-pointer"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Padronizar</span>
+              </button>
+            </div>
+
             {/* Import */}
             <div className="flex items-center justify-between gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-[#131f38] border border-slate-200 dark:border-[#1e3056]">
               <div>
@@ -1309,6 +1333,13 @@ export const MorePage: React.FC = () => {
           sale={sampleTestSale}
         />
       )}
+
+      {/* Standardize Product Names Modal */}
+      <StandardizeNamesModal
+        isOpen={showStandardizeModal}
+        onClose={() => setShowStandardizeModal(false)}
+        products={getStoredProducts()}
+      />
     </div>
   );
 };
