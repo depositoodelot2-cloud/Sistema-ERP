@@ -61,6 +61,26 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
   const [surchargeVal, setSurchargeVal] = useState<number>(surcharge || 0);
   const [surchargePercentStr, setSurchargePercentStr] = useState<string>('');
 
+  const [editingQtyProductId, setEditingQtyProductId] = useState<string | null>(null);
+  const [tempQtyInput, setTempQtyInput] = useState<string>('');
+
+  const handleCommitQuantity = (productId: string) => {
+    const clean = tempQtyInput.replace(',', '.').trim();
+    if (clean === '') {
+      setEditingQtyProductId(null);
+      return;
+    }
+    const val = parseFloat(clean);
+    if (!isNaN(val)) {
+      if (val > 0) {
+        updateQuantity(productId, Math.round(val * 1000) / 1000);
+      } else {
+        updateQuantity(productId, 0);
+      }
+    }
+    setEditingQtyProductId(null);
+  };
+
   useEffect(() => {
     setDiscountVal(discount || 0);
   }, [discount]);
@@ -290,9 +310,40 @@ export const CartDrawerModal: React.FC<CartDrawerModalProps> = ({
                         <Minus className="w-3 h-3 stroke-[2.5]" />
                       </button>
 
-                      <span className="w-7 text-center text-xs font-black text-slate-900 dark:text-white font-mono">
-                        {item.quantity}
-                      </span>
+                      {editingQtyProductId === item.product.id ? (
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          autoFocus
+                          value={tempQtyInput}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => setTempQtyInput(e.target.value)}
+                          onFocus={(e) => e.target.select()}
+                          onKeyDown={(e) => {
+                            e.stopPropagation();
+                            if (e.key === 'Enter') {
+                              handleCommitQuantity(item.product.id);
+                            } else if (e.key === 'Escape') {
+                              setEditingQtyProductId(null);
+                            }
+                          }}
+                          onBlur={() => handleCommitQuantity(item.product.id)}
+                          className="w-10 h-6 text-center text-xs font-black font-mono bg-white dark:bg-[#0c1527] border-2 border-[#2563eb] rounded-lg text-slate-900 dark:text-white focus:outline-none shadow-xs px-1 mx-0.5"
+                        />
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingQtyProductId(item.product.id);
+                            setTempQtyInput(String(item.quantity));
+                          }}
+                          title="Clique para digitar a quantidade"
+                          className="min-w-7 px-1 h-6 text-center text-xs font-black text-slate-900 dark:text-white font-mono hover:bg-blue-100 dark:hover:bg-[#1e3058] rounded-md transition-colors cursor-pointer select-none flex items-center justify-center"
+                        >
+                          {item.quantity}
+                        </button>
+                      )}
 
                       <button
                         type="button"

@@ -23,7 +23,7 @@ import { ReturnModal } from '../components/ReturnModal';
 import { SelectSaleForReturnModal } from '../components/SelectSaleForReturnModal';
 import { useCart } from '../hooks/useCart';
 import { Category, Product, Sale } from '../types';
-import { formatCurrency } from '../utils/formatters';
+import { formatCurrency, formatNumber } from '../utils/formatters';
 import { filterAndRankProducts } from '../utils/semanticSearch';
 import { getStoredCategories, getStoredProducts } from '../utils/storage';
 
@@ -56,6 +56,25 @@ export const PDVPage: React.FC = () => {
   const [scanAlert, setScanAlert] = useState<string | null>(null);
   const [zoomedProduct, setZoomedProduct] = useState<Product | null>(null);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [editingQtyProductId, setEditingQtyProductId] = useState<string | null>(null);
+  const [tempQtyInput, setTempQtyInput] = useState<string>('');
+
+  const handleCommitQuantity = (productId: string) => {
+    const clean = tempQtyInput.replace(',', '.').trim();
+    if (clean === '') {
+      setEditingQtyProductId(null);
+      return;
+    }
+    const val = parseFloat(clean);
+    if (!isNaN(val)) {
+      if (val > 0) {
+        updateQuantity(productId, Math.round(val * 1000) / 1000);
+      } else {
+        updateQuantity(productId, 0);
+      }
+    }
+    setEditingQtyProductId(null);
+  };
 
   // Hardware barcode scanner listener (USB/Bluetooth scanners send keystrokes and Enter)
   useEffect(() => {
@@ -360,7 +379,10 @@ export const PDVPage: React.FC = () => {
             return (
               <div
                 key={product.id}
-                onClick={() => setSelectedProductId(product.id)}
+                onClick={() => {
+                  setSelectedProductId(product.id);
+                  addItem(product, 1);
+                }}
                 className={`p-2.5 sm:p-3 rounded-2xl flex items-center justify-between gap-2.5 transition-all cursor-pointer ${
                   isInCart
                     ? 'bg-blue-50/70 dark:bg-[#0c1527] border-2 border-[#2563eb] shadow-[0_0_15px_rgba(37,99,235,0.18)]'
@@ -420,41 +442,65 @@ export const PDVPage: React.FC = () => {
                 {/* Right: Price & Stepper or Add Button */}
                 <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
                   <span className="text-xs sm:text-sm font-black font-mono text-[#2563eb] dark:text-[#3b82f6]">
-                    {formatCurrency(product.sellPrice)}
+                    {formatNumber(product.sellPrice)}
                   </span>
 
-                  {isInCart ? (
+                  {isInCart && (
                     <div className="bg-slate-100 dark:bg-[#111d38] border border-slate-200 dark:border-[#1e3058] rounded-xl p-0.5 flex items-center">
                       <button
                         type="button"
                         onClick={() => updateQuantity(product.id, inCartQty - 1)}
                         className="w-6 h-6 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-[#1e3058] flex items-center justify-center active:scale-95 transition-all"
+                        title="Diminuir quantidade"
                       >
                         <Minus className="w-3.5 h-3.5" />
                       </button>
 
-                      <span className="w-6 text-center text-xs font-black text-slate-900 dark:text-white font-mono">
-                        {inCartQty}
-                      </span>
+                      {editingQtyProductId === product.id ? (
+                        <input
+                          type="text"
+                          inputMode="decimal"
+                          autoFocus
+                          value={tempQtyInput}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => setTempQtyInput(e.target.value)}
+                          onFocus={(e) => e.target.select()}
+                          onKeyDown={(e) => {
+                            e.stopPropagation();
+                            if (e.key === 'Enter') {
+                              handleCommitQuantity(product.id);
+                            } else if (e.key === 'Escape') {
+                              setEditingQtyProductId(null);
+                            }
+                          }}
+                          onBlur={() => handleCommitQuantity(product.id)}
+                          className="w-10 h-6 text-center text-xs font-black font-mono bg-white dark:bg-[#0c1527] border-2 border-[#2563eb] rounded-lg text-slate-900 dark:text-white focus:outline-none shadow-xs px-1 mx-0.5"
+                        />
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingQtyProductId(product.id);
+                            setTempQtyInput(String(inCartQty));
+                          }}
+                          title="Clique para digitar a quantidade"
+                          className="min-w-6 px-1 h-6 text-center text-xs font-black text-slate-900 dark:text-white font-mono hover:bg-blue-100 dark:hover:bg-[#1e3058] rounded-md transition-colors cursor-pointer select-none flex items-center justify-center"
+                        >
+                          {inCartQty}
+                        </button>
+                      )}
 
                       <button
                         type="button"
                         onClick={() => updateQuantity(product.id, inCartQty + 1)}
                         className="w-6 h-6 rounded-lg bg-[#2563eb] text-white hover:bg-blue-500 flex items-center justify-center active:scale-95 transition-all shadow-xs"
+                        title="Aumentar quantidade"
                       >
                         <Plus className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                  ) : isSelected ? (
-                    <button
-                      type="button"
-                      onClick={() => addItem(product, 1)}
-                      className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-[#111e3b] hover:bg-[#2563eb] text-[#2563eb] dark:text-[#3b82f6] hover:text-white border border-blue-200 dark:border-[#1e325c] hover:border-transparent flex items-center justify-center transition-all active:scale-95 shadow-xs animate-in zoom-in-75 duration-150"
-                      title="Adicionar ao carrinho"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  ) : null}
+                  )}
                 </div>
               </div>
             );
@@ -470,7 +516,10 @@ export const PDVPage: React.FC = () => {
               return (
                 <div
                   key={product.id}
-                  onClick={() => setSelectedProductId(product.id)}
+                  onClick={() => {
+                    setSelectedProductId(product.id);
+                    addItem(product, 1);
+                  }}
                   className={`p-3 rounded-2xl flex flex-col justify-between transition-all cursor-pointer ${
                     isInCart
                       ? 'bg-blue-50/70 dark:bg-[#0c1527] border-2 border-[#2563eb] shadow-[0_0_15px_rgba(37,99,235,0.18)]'
@@ -505,9 +554,18 @@ export const PDVPage: React.FC = () => {
                     <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono mb-1">
                       <span>##{product.code}</span>
                       {isInCart && (
-                        <span className="px-1.5 py-0.5 rounded-md bg-[#2563eb] text-white font-black text-[10px]">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingQtyProductId(product.id);
+                            setTempQtyInput(String(inCartQty));
+                          }}
+                          title="Clique para alterar a quantidade"
+                          className="px-1.5 py-0.5 rounded-md bg-[#2563eb] hover:bg-blue-600 active:scale-95 text-white font-black text-[10px] cursor-pointer transition-all"
+                        >
                           {inCartQty}x
-                        </span>
+                        </button>
                       )}
                     </div>
                     <h3 className="text-xs font-black text-slate-800 dark:text-white line-clamp-2 leading-tight">
@@ -520,17 +578,63 @@ export const PDVPage: React.FC = () => {
 
                   <div className="mt-3 pt-2 border-t border-slate-100 dark:border-[#16233d] flex items-center justify-between gap-1" onClick={(e) => e.stopPropagation()}>
                     <span className="text-xs font-black font-mono text-[#2563eb] dark:text-[#3b82f6]">
-                      {formatCurrency(product.sellPrice)}
+                      {formatNumber(product.sellPrice)}
                     </span>
-                    {isSelected && (
-                      <button
-                        type="button"
-                        onClick={() => addItem(product, 1)}
-                        className="w-7 h-7 rounded-xl bg-[#2563eb] text-white flex items-center justify-center active:scale-95 shadow-xs animate-in zoom-in-75 duration-150"
-                        title="Adicionar ao carrinho"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                      </button>
+                    {isInCart && (
+                      <div className="bg-slate-100 dark:bg-[#111d38] border border-slate-200 dark:border-[#1e3058] rounded-xl p-0.5 flex items-center">
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(product.id, inCartQty - 1)}
+                          className="w-5 h-5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-[#1e3058] flex items-center justify-center active:scale-95 transition-all"
+                          title="Diminuir quantidade"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+
+                        {editingQtyProductId === product.id ? (
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            autoFocus
+                            value={tempQtyInput}
+                            onClick={(e) => e.stopPropagation()}
+                            onChange={(e) => setTempQtyInput(e.target.value)}
+                            onFocus={(e) => e.target.select()}
+                            onKeyDown={(e) => {
+                              e.stopPropagation();
+                              if (e.key === 'Enter') {
+                                handleCommitQuantity(product.id);
+                              } else if (e.key === 'Escape') {
+                                setEditingQtyProductId(null);
+                              }
+                            }}
+                            onBlur={() => handleCommitQuantity(product.id)}
+                            className="w-9 h-5 text-center text-xs font-black font-mono bg-white dark:bg-[#0c1527] border border-[#2563eb] rounded text-slate-900 dark:text-white focus:outline-none shadow-xs px-0.5 mx-0.5"
+                          />
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingQtyProductId(product.id);
+                              setTempQtyInput(String(inCartQty));
+                            }}
+                            title="Clique para digitar a quantidade"
+                            className="min-w-5 px-1 h-5 text-center text-xs font-black text-slate-900 dark:text-white font-mono hover:bg-blue-100 dark:hover:bg-[#1e3058] rounded transition-colors cursor-pointer select-none flex items-center justify-center"
+                          >
+                            {inCartQty}
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(product.id, inCartQty + 1)}
+                          className="w-5 h-5 rounded-lg bg-[#2563eb] text-white hover:bg-blue-500 flex items-center justify-center active:scale-95 transition-all shadow-xs"
+                          title="Aumentar quantidade"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
