@@ -382,7 +382,13 @@ export const SalesHistoryPage: React.FC = () => {
 
                 {/* Right: Total Value + Chevron Right */}
                 <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                  <span className="text-xs font-black font-mono text-emerald-700 dark:text-emerald-400">
+                  <span
+                    className={`text-xs font-black font-mono ${
+                      sale.status === 'cancelled'
+                        ? 'text-orange-500 dark:text-orange-400'
+                        : 'text-emerald-700 dark:text-emerald-400'
+                    }`}
+                  >
                     {formatCurrency(sale.total)}
                   </span>
                   <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200 transition-colors shrink-0" />

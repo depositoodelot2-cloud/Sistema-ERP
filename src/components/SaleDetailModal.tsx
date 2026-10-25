@@ -161,7 +161,13 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-0.5">
                   TOTAL DA VENDA
                 </span>
-                <span className="text-xs font-black font-mono text-slate-900 dark:text-white block">
+                <span
+                  className={`text-xs font-black font-mono block ${
+                    isCancelled
+                      ? 'text-orange-500 dark:text-orange-400'
+                      : 'text-slate-900 dark:text-white'
+                  }`}
+                >
                   {formatCurrency(sale.total)}
                 </span>
               </div>
