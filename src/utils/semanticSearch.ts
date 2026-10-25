@@ -113,7 +113,7 @@ export function filterAndRankProducts(
   }
 
   if (!normQuery) {
-    return pool;
+    return [...pool].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' }));
   }
 
   // 1. Detect explicit Stock Intent
@@ -262,11 +262,25 @@ export function filterAndRankProducts(
 
   // Sort results
   if (isCheapIntent) {
-    scoredProducts.sort((a, b) => a.product.sellPrice - b.product.sellPrice || b.score - a.score);
+    scoredProducts.sort(
+      (a, b) =>
+        a.product.sellPrice - b.product.sellPrice ||
+        b.score - a.score ||
+        a.product.name.localeCompare(b.product.name, 'pt-BR', { sensitivity: 'base' })
+    );
   } else if (isExpensiveIntent) {
-    scoredProducts.sort((a, b) => b.product.sellPrice - a.product.sellPrice || b.score - a.score);
+    scoredProducts.sort(
+      (a, b) =>
+        b.product.sellPrice - a.product.sellPrice ||
+        b.score - a.score ||
+        a.product.name.localeCompare(b.product.name, 'pt-BR', { sensitivity: 'base' })
+    );
   } else {
-    scoredProducts.sort((a, b) => b.score - a.score);
+    scoredProducts.sort(
+      (a, b) =>
+        b.score - a.score ||
+        a.product.name.localeCompare(b.product.name, 'pt-BR', { sensitivity: 'base' })
+    );
   }
 
   return scoredProducts.map((sp) => sp.product);

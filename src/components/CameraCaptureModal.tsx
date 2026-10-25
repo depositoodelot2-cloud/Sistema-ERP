@@ -64,13 +64,28 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
   const takePhoto = () => {
     if (!videoRef.current) return;
 
+    const maxDim = 500;
+    const vWidth = videoRef.current.videoWidth || 640;
+    const vHeight = videoRef.current.videoHeight || 640;
+    let width = vWidth;
+    let height = vHeight;
+    if (width > maxDim || height > maxDim) {
+      if (width > height) {
+        height = Math.round((height * maxDim) / width);
+        width = maxDim;
+      } else {
+        width = Math.round((width * maxDim) / height);
+        height = maxDim;
+      }
+    }
+
     const canvas = document.createElement('canvas');
-    canvas.width = videoRef.current.videoWidth || 640;
-    canvas.height = videoRef.current.videoHeight || 640;
+    canvas.width = width;
+    canvas.height = height;
     const ctx = canvas.getContext('2d');
     if (ctx) {
-      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      ctx.drawImage(videoRef.current, 0, 0, width, height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
       setCapturedImage(dataUrl);
       stopCamera();
     }
@@ -81,10 +96,39 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        if (event.target?.result) {
-          setCapturedImage(event.target.result as string);
+        const rawUrl = event.target?.result as string;
+        if (!rawUrl) return;
+        const img = new Image();
+        img.onload = () => {
+          const maxDim = 500;
+          let width = img.width;
+          let height = img.height;
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            setCapturedImage(canvas.toDataURL('image/jpeg', 0.75));
+          } else {
+            setCapturedImage(rawUrl);
+          }
           stopCamera();
-        }
+        };
+        img.onerror = () => {
+          setCapturedImage(rawUrl);
+          stopCamera();
+        };
+        img.src = rawUrl;
       };
       reader.readAsDataURL(file);
     }

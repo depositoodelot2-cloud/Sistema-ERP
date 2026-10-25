@@ -5,6 +5,7 @@ import {
   initFirestoreSyncListeners,
 } from '../lib/firestoreSync';
 import { Category, Customer, Operator, Product, Sale, StoreSettings } from '../types';
+import { safeSetItem } from '../utils/safeStorage';
 import {
   getStoredCategories,
   getStoredCustomers,
@@ -12,16 +13,8 @@ import {
   getStoredProducts,
   getStoredSales,
   getStoredSettings,
+  STORAGE_KEYS,
 } from '../utils/storage';
-
-const STORAGE_KEYS = {
-  PRODUCTS: 'odelot_pdv_products_v3',
-  CATEGORIES: 'odelot_pdv_categories_v3',
-  SALES: 'odelot_pdv_sales_v3',
-  CUSTOMERS: 'odelot_pdv_customers_v3',
-  OPERATORS: 'odelot_pdv_operators_v3',
-  SETTINGS: 'odelot_pdv_settings_v3',
-};
 
 export function useFirestoreSync() {
   const [isCloudSyncActive, setIsCloudSyncActive] = useState<boolean>(true);
@@ -57,34 +50,58 @@ export function useFirestoreSync() {
     // 2. Real-time subscriptions from Firestore
     const unsubscribe = initFirestoreSyncListeners({
       onProductsSync: (products: Product[]) => {
-        localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
-        window.dispatchEvent(new Event('odelot_products_changed'));
-        setLastSyncTime(new Date());
+        try {
+          safeSetItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
+          window.dispatchEvent(new Event('odelot_products_changed'));
+          setLastSyncTime(new Date());
+        } catch (err) {
+          console.warn('[Sync] Failed to process products update:', err);
+        }
       },
       onCategoriesSync: (categories: Category[]) => {
-        localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories));
-        window.dispatchEvent(new Event('odelot_categories_changed'));
-        setLastSyncTime(new Date());
+        try {
+          safeSetItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories));
+          window.dispatchEvent(new Event('odelot_categories_changed'));
+          setLastSyncTime(new Date());
+        } catch (err) {
+          console.warn('[Sync] Failed to process categories update:', err);
+        }
       },
       onCustomersSync: (customers: Customer[]) => {
-        localStorage.setItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify(customers));
-        window.dispatchEvent(new Event('odelot_customers_changed'));
-        setLastSyncTime(new Date());
+        try {
+          safeSetItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify(customers));
+          window.dispatchEvent(new Event('odelot_customers_changed'));
+          setLastSyncTime(new Date());
+        } catch (err) {
+          console.warn('[Sync] Failed to process customers update:', err);
+        }
       },
       onOperatorsSync: (operators: Operator[]) => {
-        localStorage.setItem(STORAGE_KEYS.OPERATORS, JSON.stringify(operators));
-        window.dispatchEvent(new Event('odelot_operators_changed'));
-        setLastSyncTime(new Date());
+        try {
+          safeSetItem(STORAGE_KEYS.OPERATORS, JSON.stringify(operators));
+          window.dispatchEvent(new Event('odelot_operators_changed'));
+          setLastSyncTime(new Date());
+        } catch (err) {
+          console.warn('[Sync] Failed to process operators update:', err);
+        }
       },
       onSalesSync: (sales: Sale[]) => {
-        localStorage.setItem(STORAGE_KEYS.SALES, JSON.stringify(sales));
-        window.dispatchEvent(new Event('odelot_sales_changed'));
-        setLastSyncTime(new Date());
+        try {
+          safeSetItem(STORAGE_KEYS.SALES, JSON.stringify(sales));
+          window.dispatchEvent(new Event('odelot_sales_changed'));
+          setLastSyncTime(new Date());
+        } catch (err) {
+          console.warn('[Sync] Failed to process sales update:', err);
+        }
       },
       onSettingsSync: (settings: StoreSettings) => {
-        localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
-        window.dispatchEvent(new Event('odelot_settings_changed'));
-        setLastSyncTime(new Date());
+        try {
+          safeSetItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+          window.dispatchEvent(new Event('odelot_settings_changed'));
+          setLastSyncTime(new Date());
+        } catch (err) {
+          console.warn('[Sync] Failed to process settings update:', err);
+        }
       },
     });
 

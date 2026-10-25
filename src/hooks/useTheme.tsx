@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { safeGetItem, safeSetItem } from '../utils/safeStorage';
 
 type Theme = 'light' | 'dark';
 
@@ -12,7 +13,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>(() => {
-    const saved = localStorage.getItem('odelot_theme');
+    const saved = safeGetItem('odelot_theme');
     if (saved === 'dark' || saved === 'light') return saved;
     // Default to dark mode for modern PDV look if not specified
     return 'dark';
@@ -30,7 +31,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       document.body.classList.remove('dark');
     }
     root.style.colorScheme = theme;
-    localStorage.setItem('odelot_theme', theme);
+    safeSetItem('odelot_theme', theme);
     window.dispatchEvent(new Event('odelot_theme_changed'));
   }, [theme]);
 

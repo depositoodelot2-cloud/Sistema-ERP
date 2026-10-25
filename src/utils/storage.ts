@@ -1,7 +1,8 @@
 import { Category, Customer, Operator, Product, Quote, ReturnRecord, Sale, StoreSettings } from '../types';
 import { batchSyncAllToFirestore, saveSettingsToFirestore } from '../lib/firestoreSync';
+import { safeGetItem, safeRemoveItem, safeSetItem } from './safeStorage';
 
-const STORAGE_KEYS = {
+export const STORAGE_KEYS = {
   PRODUCTS: 'odelot_pdv_products_v3',
   CATEGORIES: 'odelot_pdv_categories_v3',
   SALES: 'odelot_pdv_sales_v3',
@@ -23,7 +24,7 @@ try {
     'odelot_pdv_quotes_v2', 'odelot_pdv_customers_v2', 'odelot_pdv_operators_v2',
     'odelot_pdv_returns_v2', 'odelot_pdv_settings_v2', 'odelot_seeded_cart_v2',
   ];
-  legacyKeys.forEach((k) => localStorage.removeItem(k));
+  legacyKeys.forEach((k) => safeRemoveItem(k));
 } catch {
   // ignore
 }
@@ -78,9 +79,9 @@ const DEFAULT_CUSTOMERS: Customer[] = [
 const DEFAULT_PRODUCTS: Product[] = [];
 
 export const getStoredProducts = (): Product[] => {
-  const data = localStorage.getItem(STORAGE_KEYS.PRODUCTS);
+  const data = safeGetItem(STORAGE_KEYS.PRODUCTS);
   if (!data) {
-    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(DEFAULT_PRODUCTS));
+    safeSetItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(DEFAULT_PRODUCTS));
     return DEFAULT_PRODUCTS;
   }
   try {
@@ -91,15 +92,15 @@ export const getStoredProducts = (): Product[] => {
 };
 
 export const saveStoredProducts = (products: Product[]) => {
-  localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
+  safeSetItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(products));
   window.dispatchEvent(new Event('odelot_products_changed'));
   batchSyncAllToFirestore({ products }).catch((e) => console.warn('Firestore sync products:', e));
 };
 
 export const getStoredCategories = (): Category[] => {
-  const data = localStorage.getItem(STORAGE_KEYS.CATEGORIES);
+  const data = safeGetItem(STORAGE_KEYS.CATEGORIES);
   if (!data) {
-    localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(DEFAULT_CATEGORIES));
+    safeSetItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(DEFAULT_CATEGORIES));
     return DEFAULT_CATEGORIES;
   }
   try {
@@ -110,13 +111,13 @@ export const getStoredCategories = (): Category[] => {
 };
 
 export const saveStoredCategories = (categories: Category[]) => {
-  localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories));
+  safeSetItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories));
   window.dispatchEvent(new Event('odelot_categories_changed'));
   batchSyncAllToFirestore({ categories }).catch((e) => console.warn('Firestore sync categories:', e));
 };
 
 export const getStoredSales = (): Sale[] => {
-  const data = localStorage.getItem(STORAGE_KEYS.SALES);
+  const data = safeGetItem(STORAGE_KEYS.SALES);
   if (!data) {
     return [];
   }
@@ -128,7 +129,7 @@ export const getStoredSales = (): Sale[] => {
 };
 
 export const saveStoredSales = (sales: Sale[]) => {
-  localStorage.setItem(STORAGE_KEYS.SALES, JSON.stringify(sales));
+  safeSetItem(STORAGE_KEYS.SALES, JSON.stringify(sales));
   window.dispatchEvent(new Event('odelot_sales_changed'));
   batchSyncAllToFirestore({ sales }).catch((e) => console.warn('Firestore sync sales:', e));
 };
@@ -170,7 +171,7 @@ export const addSaleRecord = (sale: Sale) => {
 };
 
 export const getStoredQuotes = (): Quote[] => {
-  const data = localStorage.getItem(STORAGE_KEYS.QUOTES);
+  const data = safeGetItem(STORAGE_KEYS.QUOTES);
   if (!data) return [];
   try {
     return JSON.parse(data);
@@ -180,14 +181,14 @@ export const getStoredQuotes = (): Quote[] => {
 };
 
 export const saveStoredQuotes = (quotes: Quote[]) => {
-  localStorage.setItem(STORAGE_KEYS.QUOTES, JSON.stringify(quotes));
+  safeSetItem(STORAGE_KEYS.QUOTES, JSON.stringify(quotes));
   window.dispatchEvent(new Event('odelot_quotes_changed'));
 };
 
 export const getStoredCustomers = (): Customer[] => {
-  const data = localStorage.getItem(STORAGE_KEYS.CUSTOMERS);
+  const data = safeGetItem(STORAGE_KEYS.CUSTOMERS);
   if (!data) {
-    localStorage.setItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify(DEFAULT_CUSTOMERS));
+    safeSetItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify(DEFAULT_CUSTOMERS));
     return DEFAULT_CUSTOMERS;
   }
   try {
@@ -198,15 +199,15 @@ export const getStoredCustomers = (): Customer[] => {
 };
 
 export const saveStoredCustomers = (customers: Customer[]) => {
-  localStorage.setItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify(customers));
+  safeSetItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify(customers));
   window.dispatchEvent(new Event('odelot_customers_changed'));
   batchSyncAllToFirestore({ customers }).catch((e) => console.warn('Firestore sync customers:', e));
 };
 
 export const getStoredOperators = (): Operator[] => {
-  const data = localStorage.getItem(STORAGE_KEYS.OPERATORS);
+  const data = safeGetItem(STORAGE_KEYS.OPERATORS);
   if (!data) {
-    localStorage.setItem(STORAGE_KEYS.OPERATORS, JSON.stringify(DEFAULT_OPERATORS));
+    safeSetItem(STORAGE_KEYS.OPERATORS, JSON.stringify(DEFAULT_OPERATORS));
     return DEFAULT_OPERATORS;
   }
   try {
@@ -217,13 +218,13 @@ export const getStoredOperators = (): Operator[] => {
 };
 
 export const saveStoredOperators = (operators: Operator[]) => {
-  localStorage.setItem(STORAGE_KEYS.OPERATORS, JSON.stringify(operators));
+  safeSetItem(STORAGE_KEYS.OPERATORS, JSON.stringify(operators));
   window.dispatchEvent(new Event('odelot_operators_changed'));
   batchSyncAllToFirestore({ operators }).catch((e) => console.warn('Firestore sync operators:', e));
 };
 
 export const getCurrentOperator = (): Operator => {
-  const data = localStorage.getItem(STORAGE_KEYS.CURRENT_OPERATOR);
+  const data = safeGetItem(STORAGE_KEYS.CURRENT_OPERATOR);
   if (data) {
     try {
       return JSON.parse(data);
@@ -233,17 +234,17 @@ export const getCurrentOperator = (): Operator => {
   }
   const ops = getStoredOperators();
   const def = ops[0] || DEFAULT_OPERATORS[0];
-  localStorage.setItem(STORAGE_KEYS.CURRENT_OPERATOR, JSON.stringify(def));
+  safeSetItem(STORAGE_KEYS.CURRENT_OPERATOR, JSON.stringify(def));
   return def;
 };
 
 export const saveCurrentOperator = (operator: Operator) => {
-  localStorage.setItem(STORAGE_KEYS.CURRENT_OPERATOR, JSON.stringify(operator));
+  safeSetItem(STORAGE_KEYS.CURRENT_OPERATOR, JSON.stringify(operator));
   window.dispatchEvent(new Event('odelot_operator_changed'));
 };
 
 export const getStoredReturns = (): ReturnRecord[] => {
-  const data = localStorage.getItem(STORAGE_KEYS.RETURNS);
+  const data = safeGetItem(STORAGE_KEYS.RETURNS);
   if (!data) return [];
   try {
     return JSON.parse(data);
@@ -253,21 +254,21 @@ export const getStoredReturns = (): ReturnRecord[] => {
 };
 
 export const saveStoredReturns = (returns: ReturnRecord[]) => {
-  localStorage.setItem(STORAGE_KEYS.RETURNS, JSON.stringify(returns));
+  safeSetItem(STORAGE_KEYS.RETURNS, JSON.stringify(returns));
   window.dispatchEvent(new Event('odelot_returns_changed'));
 };
 
 export const getStoredSettings = (): StoreSettings => {
-  const data = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+  const data = safeGetItem(STORAGE_KEYS.SETTINGS);
   if (!data) {
-    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
+    safeSetItem(STORAGE_KEYS.SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
     return DEFAULT_SETTINGS;
   }
   try {
     const parsed = JSON.parse(data);
     if (parsed.document === '42.189.923/0001-55') {
       const updated = { ...DEFAULT_SETTINGS, ...parsed, ...DEFAULT_SETTINGS };
-      localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(updated));
+      safeSetItem(STORAGE_KEYS.SETTINGS, JSON.stringify(updated));
       return updated;
     }
     return { ...DEFAULT_SETTINGS, ...parsed };
@@ -277,17 +278,17 @@ export const getStoredSettings = (): StoreSettings => {
 };
 
 export const saveStoredSettings = (settings: StoreSettings) => {
-  localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+  safeSetItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
   window.dispatchEvent(new Event('odelot_settings_changed'));
   saveSettingsToFirestore(settings).catch((e) => console.warn('Firestore sync settings:', e));
 };
 
 export const seedSampleData = () => {
-  localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(DEFAULT_PRODUCTS));
-  localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(DEFAULT_CATEGORIES));
-  localStorage.setItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify(DEFAULT_CUSTOMERS));
-  localStorage.setItem(STORAGE_KEYS.OPERATORS, JSON.stringify(DEFAULT_OPERATORS));
-  localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
+  safeSetItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(DEFAULT_PRODUCTS));
+  safeSetItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(DEFAULT_CATEGORIES));
+  safeSetItem(STORAGE_KEYS.CUSTOMERS, JSON.stringify(DEFAULT_CUSTOMERS));
+  safeSetItem(STORAGE_KEYS.OPERATORS, JSON.stringify(DEFAULT_OPERATORS));
+  safeSetItem(STORAGE_KEYS.SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
 
   window.dispatchEvent(new Event('odelot_products_changed'));
   window.dispatchEvent(new Event('odelot_categories_changed'));

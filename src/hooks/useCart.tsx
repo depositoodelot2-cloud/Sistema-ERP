@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { CartItem, Customer, Product } from '../types';
 import { playBeep } from '../utils/printReceiptHelper';
+import { safeGetItem, safeRemoveItem, safeSetItem } from '../utils/safeStorage';
 import { getStoredProducts, getStoredSettings } from '../utils/storage';
 
 interface CartContextType {
@@ -33,8 +34,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [items, setItems] = useState<CartItem[]>(() => {
     // Clear legacy seed cart
     try {
-      localStorage.removeItem('odelot_seeded_cart_v2');
-      const saved = localStorage.getItem(CART_STORAGE_KEY);
+      safeRemoveItem('odelot_seeded_cart_v2');
+      const saved = safeGetItem(CART_STORAGE_KEY);
       if (saved) {
         return JSON.parse(saved);
       }
@@ -54,7 +55,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [notes, setNotes] = useState<string>('');
 
   useEffect(() => {
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+    safeSetItem(CART_STORAGE_KEY, JSON.stringify(items));
     if (items.length > 0 && !lastActiveItem) {
       setLastActiveItem(items[0]);
     } else if (items.length === 0) {
