@@ -5,9 +5,14 @@ import { getPaymentMethodLabel } from '../utils/formatters';
 interface PrintReceiptViewProps {
   sale: Sale;
   settings: StoreSettings;
+  format?: '80mm' | '58mm';
 }
 
-export const PrintReceiptView: React.FC<PrintReceiptViewProps> = ({ sale, settings }) => {
+export const PrintReceiptView: React.FC<PrintReceiptViewProps> = ({
+  sale,
+  settings,
+  format = '80mm',
+}) => {
   // Format numbers to Brazilian currency format without 'R$' prefix: '1,20'
   const formatNumber = (val: number | undefined | null): string => {
     if (val === undefined || val === null || isNaN(val)) return '0,00';
@@ -40,168 +45,207 @@ export const PrintReceiptView: React.FC<PrintReceiptViewProps> = ({ sale, settin
     ? sale.code
     : `VND-${sale.code}`;
 
+  const items = sale.items || [];
+  const is58mm = format === '58mm';
+  const widthClass = is58mm ? 'w-[58mm]' : 'w-[80mm]';
+
   return (
     <div
       id="printable-receipt-area"
-      className="w-[80mm] max-w-full mx-auto p-4 sm:p-5 bg-white text-black font-sans text-[11px] leading-tight select-none border border-slate-200 dark:border-slate-700 shadow-md rounded-xs"
+      className={`${widthClass} max-w-full mx-auto p-3 sm:p-4 bg-white text-black font-mono text-[11px] leading-tight select-none border border-slate-200 dark:border-slate-700 shadow-md rounded-xs`}
       style={{
-        width: '80mm',
+        width: is58mm ? '58mm' : '80mm',
         minHeight: 'auto',
         boxSizing: 'border-box',
       }}
     >
       {/* 1. Header: Store branding */}
       <div className="text-center pb-2">
-        <h1 className="text-xl font-black tracking-wider uppercase text-black font-sans leading-none">
+        <h1 className="text-lg font-black tracking-wider uppercase text-black font-sans leading-none">
           {settings.name || 'ODELOT'}
         </h1>
-        <p className="text-[11px] font-medium leading-tight text-black mt-1">
-          {settings.tradingName || 'Depósito Odelot Materiais & Bebidas Ltda'}
-        </p>
-        <p className="text-[11px] font-medium leading-tight text-black">
-          CNPJ: {settings.document || '03.989.211/0001-97'}
-        </p>
-        <p className="text-[11px] font-medium leading-tight text-black">
-          {settings.address || 'Avenida JK,1240 - Jardim Panorama'}
-        </p>
-        <p className="text-[11px] font-medium leading-tight text-black">
-          {settings.cityState || 'Ipatinga - MG'}
-        </p>
-        <p className="text-[11px] font-medium leading-tight text-black">
-          Tel: {settings.phone || '(31)98372-7095'}
-        </p>
+        {settings.tradingName && settings.tradingName.trim() && settings.tradingName !== 'Depósito Odelot Materiais & Bebidas Ltda' && (
+          <p className="text-[10px] font-medium leading-tight text-black mt-1">
+            {settings.tradingName.trim()}
+          </p>
+        )}
+        {settings.document && settings.document.trim() && (
+          <p className="text-[10px] font-medium leading-tight text-black">
+            CNPJ: {settings.document.trim()}
+          </p>
+        )}
+        {settings.address && settings.address.trim() && (
+          <p className="text-[10px] font-medium leading-tight text-black">
+            {settings.address.trim()}
+          </p>
+        )}
+        {settings.cityState && settings.cityState.trim() && (
+          <p className="text-[10px] font-medium leading-tight text-black">
+            {settings.cityState.trim()}
+          </p>
+        )}
+        {settings.phone && settings.phone.trim() && (
+          <p className="text-[10px] font-medium leading-tight text-black">
+            Tel: {settings.phone.trim()}
+          </p>
+        )}
       </div>
 
       {/* Dashed Line */}
-      <div className="border-b border-dashed border-black/70 my-2" />
+      <div className="border-b border-dashed border-black/70 my-1.5" />
 
       {/* 2. Sale Info */}
-      <div className="py-1 text-[11px] space-y-1 font-mono">
-        <div className="flex justify-between items-center">
-          <span className="font-bold">CUPOM NÃO FISCAL:</span>
-          <span className="font-black italic">#{displayCode}</span>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="font-bold">DATA / HORA:</span>
-          <span>{formatSaleDateTime(sale.date)}</span>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="font-bold">VENDEDOR:</span>
-          <span className="truncate max-w-[160px]">{sale.operatorName || 'Carlos Admin'}</span>
-        </div>
-        {sale.customerName && (
-          <div className="flex justify-between items-center">
-            <span className="font-bold">CLIENTE:</span>
-            <span className="truncate max-w-[160px]">{sale.customerName}</span>
-          </div>
-        )}
-        {sale.customerDocument && (
-          <div className="flex justify-between items-center">
-            <span className="font-bold">CPF/CNPJ:</span>
-            <span>{sale.customerDocument}</span>
-          </div>
-        )}
-      </div>
+      <table className="w-full border-collapse text-[10px] my-1">
+        <tbody>
+          <tr>
+            <td className="text-left font-bold py-0.5">CUPOM NÃO FISCAL:</td>
+            <td className="text-right font-black italic py-0.5">#{displayCode}</td>
+          </tr>
+          <tr>
+            <td className="text-left font-bold py-0.5">DATA / HORA:</td>
+            <td className="text-right py-0.5">{formatSaleDateTime(sale.date)}</td>
+          </tr>
+          <tr>
+            <td className="text-left font-bold py-0.5">VENDEDOR:</td>
+            <td className="text-right py-0.5">{sale.operatorName || 'Carlos Admin'}</td>
+          </tr>
+          {sale.customerName && (
+            <tr>
+              <td className="text-left font-bold py-0.5">CLIENTE:</td>
+              <td className="text-right font-medium py-0.5 truncate max-w-[140px]">{sale.customerName}</td>
+            </tr>
+          )}
+          {sale.customerDocument && (
+            <tr>
+              <td className="text-left font-bold py-0.5">CPF/CNPJ:</td>
+              <td className="text-right py-0.5">{sale.customerDocument}</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
 
       {/* Dashed Line */}
-      <div className="border-b border-dashed border-black/70 my-2" />
+      <div className="border-b border-dashed border-black/70 my-1.5" />
 
-      {/* 3. Items Table */}
-      <div className="py-1">
-        <div className="grid grid-cols-12 text-[10px] font-black uppercase pb-1 mb-1 font-mono">
-          <span className="col-span-6">ITEM / DESCRIÇÃO</span>
-          <span className="col-span-2 text-center">QTD</span>
-          <span className="col-span-2 text-right">VL.UN</span>
-          <span className="col-span-2 text-right">TOTAL</span>
-        </div>
+      {/* 3. Items List */}
+      <div className="py-0.5">
+        <table className="w-full border-collapse text-[10px] font-black uppercase mb-1">
+          <tbody>
+            <tr>
+              <td className="text-left">ITEM / DESCRIÇÃO</td>
+              <td className="text-right">TOTAL</td>
+            </tr>
+          </tbody>
+        </table>
 
-        <div className="border-b border-dashed border-black/40 mb-1.5" />
+        {/* Dashed Line */}
+        <div className="border-b border-dashed border-black/70 my-1" />
 
-        <div className="space-y-1 font-mono">
-          {sale.items.map((item, idx) => (
-            <div key={idx} className="grid grid-cols-12 text-[11px] items-start">
-              <div className="col-span-6 pr-1 font-bold truncate leading-tight">
-                {idx + 1}. {item.productName}
+        <div className="space-y-1.5 pt-0.5">
+          {items.map((item, index) => (
+            <div key={item.productId || index} className="text-[10px] leading-tight">
+              <div className="font-black text-black break-words uppercase">
+                {index + 1}. {item.productName.toUpperCase()}
               </div>
-              <div className="col-span-2 text-center font-medium">
-                {item.quantity} {item.unit || 'un'}
-              </div>
-              <div className="col-span-2 text-right font-medium">
-                {formatNumber(item.unitPrice)}
-              </div>
-              <div className="col-span-2 text-right font-black">
-                {formatNumber(item.subtotal)}
-              </div>
+              <table className="w-full border-collapse text-[10px] pt-0.5 text-black">
+                <tbody>
+                  <tr>
+                    <td className="text-left">
+                      {item.quantity} {item.unit || 'un'} x {formatNumber(item.unitPrice)}
+                    </td>
+                    <td className="text-right font-black font-mono">
+                      {formatNumber(item.subtotal)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           ))}
         </div>
       </div>
 
       {/* Dashed Line */}
-      <div className="border-b border-dashed border-black/70 my-2" />
+      <div className="border-b border-dashed border-black/70 my-1.5" />
 
-      {/* 4. Subtotal, Discounts, Surcharge & Total */}
-      <div className="space-y-1 font-mono text-[11px]">
-        <div className="flex justify-between items-center">
-          <span className="font-bold">SUBTOTAL:</span>
-          <span className="font-bold">R${formatNumber(sale.subtotal)}</span>
-        </div>
-        {sale.discount > 0 && (
-          <div className="flex justify-between items-center">
-            <span className="font-bold">DESCONTO:</span>
-            <span className="font-bold">- R${formatNumber(sale.discount)}</span>
-          </div>
-        )}
-        {sale.surcharge !== undefined && sale.surcharge > 0 && (
-          <div className="flex justify-between items-center">
-            <span className="font-bold">ACRÉSCIMO:</span>
-            <span className="font-bold">+ R${formatNumber(sale.surcharge)}</span>
-          </div>
-        )}
-        <div className="flex justify-between items-center text-base font-black pt-1">
-          <span>TOTAL:</span>
-          <span>R$ {formatNumber(sale.total)}</span>
-        </div>
+      {/* 4. Totals */}
+      <div className="py-0.5 text-[10px]">
+        <table className="w-full border-collapse">
+          <tbody>
+            <tr>
+              <td className="text-left font-bold py-0.5">SUBTOTAL:</td>
+              <td className="text-right font-mono font-bold py-0.5">{formatNumber(sale.subtotal)}</td>
+            </tr>
+            {sale.discount > 0 && (
+              <tr>
+                <td className="text-left font-bold py-0.5">DESCONTO:</td>
+                <td className="text-right font-mono py-0.5">- {formatNumber(sale.discount)}</td>
+              </tr>
+            )}
+            {sale.surcharge !== undefined && sale.surcharge > 0 && (
+              <tr>
+                <td className="text-left font-bold py-0.5">ACRÉSCIMO:</td>
+                <td className="text-right font-mono py-0.5">+ {formatNumber(sale.surcharge)}</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+
+        {/* Solid line above TOTAL */}
+        <div className="border-t border-black/70 my-1" />
+
+        <table className="w-full border-collapse pt-0.5">
+          <tbody>
+            <tr>
+              <td className="text-left font-black text-xs">TOTAL:</td>
+              <td className="text-right font-mono text-sm font-black">{formatNumber(sale.total)}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       {/* Dashed Line */}
-      <div className="border-b border-dashed border-black/70 my-2" />
+      <div className="border-b border-dashed border-black/70 my-1.5" />
 
-      {/* 5. Forma de Pagamento */}
-      <div className="space-y-1 font-mono text-[11px]">
-        <div className="flex justify-between items-center">
-          <span className="font-bold">FORMA DE PAGAMENTO:</span>
-          <span className="font-medium">{getPaymentMethodLabel(sale.paymentMethod)}</span>
-        </div>
-        {sale.paymentMethod === 'money' && (
-          <>
-            <div className="flex justify-between items-center">
-              <span className="font-bold">VALOR RECEBIDO:</span>
-              <span className="font-medium">R${formatNumber(sale.amountPaid || sale.total)}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="font-bold">TROCO:</span>
-              <span className="font-medium">R${formatNumber(sale.change || 0)}</span>
-            </div>
-          </>
-        )}
-        {sale.paymentMethod === 'credit' && sale.installments && sale.installments > 1 && (
-          <div className="flex justify-between items-center">
-            <span className="font-bold">PARCELAS:</span>
-            <span className="font-medium">
-              {sale.installments}x de R${formatNumber(sale.total / sale.installments)}
-            </span>
-          </div>
-        )}
+      {/* 5. Payment details */}
+      <div className="py-0.5 text-[10px]">
+        <table className="w-full border-collapse">
+          <tbody>
+            <tr>
+              <td className="text-left font-bold py-0.5">FORMA PAGAMENTO:</td>
+              <td className="text-right font-black uppercase py-0.5">{getPaymentMethodLabel(sale.paymentMethod).toUpperCase()}</td>
+            </tr>
+            {sale.paymentMethod === 'money' && (
+              <>
+                <tr>
+                  <td className="text-left font-bold py-0.5">VALOR RECEBIDO:</td>
+                  <td className="text-right font-mono py-0.5">{formatNumber(sale.amountPaid || sale.total)}</td>
+                </tr>
+                <tr>
+                  <td className="text-left font-bold py-0.5">TROCO:</td>
+                  <td className="text-right font-mono py-0.5">{formatNumber(sale.change || 0)}</td>
+                </tr>
+              </>
+            )}
+            {sale.paymentMethod === 'credit' && sale.installments && sale.installments > 1 && (
+              <tr>
+                <td className="text-left font-bold py-0.5">PARCELAS:</td>
+                <td className="text-right py-0.5">{sale.installments}x de {formatNumber(sale.total / sale.installments)}</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
 
       {/* Dashed Line */}
-      <div className="border-b border-dashed border-black/70 my-2" />
+      <div className="border-b border-dashed border-black/70 my-1.5" />
 
       {/* 6. Footer message */}
-      <div className="text-center pt-1 font-sans">
-        <p className="text-[11px] italic font-semibold text-black">
+      <div className="pt-2 text-center text-[10px] leading-tight">
+        <p className="font-medium text-black">
           {settings.receiptFooter || 'Agradecemos a sua preferência! Volte sempre.'}
+        </p>
+        <p className="text-[9px] text-black/70 mt-1 uppercase font-mono">
+          ODELOT PDV • SISTEMA DE GESTÃO
         </p>
       </div>
     </div>

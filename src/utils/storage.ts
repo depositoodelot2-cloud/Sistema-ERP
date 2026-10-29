@@ -31,7 +31,7 @@ try {
 
 const DEFAULT_SETTINGS: StoreSettings = {
   name: 'ODELOT',
-  tradingName: 'Depósito Odelot Materiais & Bebidas Ltda',
+  tradingName: '',
   document: '03.989.211/0001-97',
   phone: '(31)98372-7095',
   address: 'Avenida JK,1240 - Jardim Panorama',
@@ -266,12 +266,20 @@ export const getStoredSettings = (): StoreSettings => {
   }
   try {
     const parsed = JSON.parse(data);
+    if (parsed.tradingName === 'Depósito Odelot Materiais & Bebidas Ltda') {
+      parsed.tradingName = '';
+      safeSetItem(STORAGE_KEYS.SETTINGS, JSON.stringify({ ...DEFAULT_SETTINGS, ...parsed, tradingName: '' }));
+    }
     if (parsed.document === '42.189.923/0001-55') {
-      const updated = { ...DEFAULT_SETTINGS, ...parsed, ...DEFAULT_SETTINGS };
+      const updated = { ...DEFAULT_SETTINGS, ...parsed, ...DEFAULT_SETTINGS, tradingName: '' };
       safeSetItem(STORAGE_KEYS.SETTINGS, JSON.stringify(updated));
       return updated;
     }
-    return { ...DEFAULT_SETTINGS, ...parsed };
+    return {
+      ...DEFAULT_SETTINGS,
+      ...parsed,
+      tradingName: parsed.tradingName === 'Depósito Odelot Materiais & Bebidas Ltda' ? '' : (parsed.tradingName || ''),
+    };
   } catch {
     return DEFAULT_SETTINGS;
   }

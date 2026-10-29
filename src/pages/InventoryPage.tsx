@@ -3,8 +3,10 @@ import {
   AlertTriangle,
   Barcode,
   Check,
+  ChevronDown,
   Edit2,
   FileSpreadsheet,
+  Layers,
   Minus,
   Package,
   Plus,
@@ -72,14 +74,23 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({
     };
   }, []);
 
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState<boolean>(false);
+
   // Filtered and ranked products with semantic, partial & intent matching
   const filteredProducts = useMemo(() => {
-    const list = filterAndRankProducts(products, search);
+    let list = filterAndRankProducts(products, search);
+    if (selectedCategory !== 'all') {
+      list = list.filter((p) => p.category === selectedCategory);
+    }
     if (stockFilter === 'critical') {
       return list.filter((p) => p.stock <= p.minStock);
     }
     return list;
-  }, [products, search, stockFilter]);
+  }, [products, search, selectedCategory, stockFilter]);
+
+  const activeCategory = categories.find((c) => c.id === selectedCategory);
+  const activeCategoryName = activeCategory ? activeCategory.name : 'Todas as Categorias';
 
 
   const handleSaveProduct = (
@@ -174,12 +185,89 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({
          ======================================================== */}
       <div className="shrink-0 px-4 sm:px-5 pt-3 sm:pt-4 pb-3 space-y-3 bg-[#f8fafc] dark:bg-[#070e1c] border-b border-slate-200/80 dark:border-[#131f38] shadow-2xs z-10 transition-colors">
         
-        {/* 1. HEADER: Title & Action Buttons (Spreadsheet, Novo Produto) */}
+        {/* 1. HEADER: Category Dropdown (where "Estoque" was) & Action Buttons */}
         <div className="flex items-center justify-between gap-2">
-          <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-            Estoque
-          </h1>
+          {/* Category Dropdown Button */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+              className="h-10 px-3 sm:px-3.5 rounded-2xl bg-white dark:bg-[#0e172a] border border-slate-200 dark:border-[#1e2f52] hover:border-slate-300 dark:hover:border-[#2b4170] text-slate-800 dark:text-white flex items-center gap-2 text-xs font-bold transition-all shadow-2xs active:scale-[0.98] cursor-pointer"
+              title="Filtrar produtos por categoria"
+            >
+              <Layers className="w-4 h-4 text-[#2563eb] shrink-0" />
+              <span className="truncate max-w-[110px] sm:max-w-[150px] font-black">
+                {activeCategoryName}
+              </span>
+              <ChevronDown
+                className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${
+                  showCategoryDropdown ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
 
+            {/* Dropdown Menu */}
+            {showCategoryDropdown && (
+              <>
+                <div
+                  className="fixed inset-0 z-20"
+                  onClick={() => setShowCategoryDropdown(false)}
+                />
+                <div className="absolute top-full left-0 mt-1.5 z-30 w-56 sm:w-64 bg-white dark:bg-[#0e172a] border border-slate-200 dark:border-[#1e2f54] rounded-2xl shadow-2xl p-1.5 space-y-1 animate-in fade-in max-h-64 overflow-y-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedCategory('all');
+                      setShowCategoryDropdown(false);
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between transition-colors cursor-pointer ${
+                      selectedCategory === 'all'
+                        ? 'bg-[#2563eb] text-white shadow-xs'
+                        : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#152342]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Layers className="w-3.5 h-3.5 opacity-70" />
+                      <span>Todas as Categorias</span>
+                    </div>
+                    <span className="text-[10px] opacity-80">{products.length}</span>
+                  </button>
+
+                  {categories.map((cat) => {
+                    const count = products.filter((p) => p.category === cat.id).length;
+                    const isSelected = selectedCategory === cat.id;
+
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedCategory(cat.id);
+                          setShowCategoryDropdown(false);
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between transition-colors cursor-pointer ${
+                          isSelected
+                            ? 'bg-[#2563eb] text-white shadow-xs'
+                            : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#152342]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span
+                            className="w-2.5 h-2.5 rounded-full shrink-0"
+                            style={{ backgroundColor: cat.color }}
+                          />
+                          <span className="truncate">{cat.name}</span>
+                        </div>
+                        <span className="text-[10px] opacity-80 shrink-0 ml-1">{count}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Action Buttons (Spreadsheet, Novo Produto) */}
           <div className="flex items-center gap-2">
             {/* Export to CSV / Spreadsheet Button */}
             <button

@@ -790,6 +790,20 @@ export const MorePage: React.FC = () => {
               />
             </div>
 
+            {/* Razão Social (Opcional) */}
+            <div>
+              <label className="text-xs font-bold text-slate-900 dark:text-white block mb-1">
+                Razão Social <span className="text-slate-400 font-normal">(Opcional - só aparece no recibo se preenchido)</span>
+              </label>
+              <input
+                type="text"
+                value={settings.tradingName || ''}
+                onChange={(e) => setSettings({ ...settings, tradingName: e.target.value })}
+                placeholder="Ex: Nome Empresarial Ltda (opcional)"
+                className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 dark:border-[#1a2846] bg-white dark:bg-[#131f38] text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:border-[#2563eb]"
+              />
+            </div>
+
             {/* CNPJ e Telefone */}
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -906,7 +920,7 @@ export const MorePage: React.FC = () => {
                   Largura da Bobina Térmica
                 </label>
                 <select
-                  value={settings.printerWidth}
+                  value={settings.printerWidth === '58mm' ? '58mm' : '80mm'}
                   onChange={(e) =>
                     setSettings({
                       ...settings,
@@ -915,8 +929,8 @@ export const MorePage: React.FC = () => {
                   }
                   className="w-full px-3.5 py-2.5 rounded-2xl border border-slate-200 dark:border-[#1a2846] bg-white dark:bg-[#131f38] text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:border-[#2563eb]"
                 >
-                  <option value="80mm">80mm (Padrão comercial)</option>
-                  <option value="58mm">58mm (Mini impressora)</option>
+                  <option value="80mm">80mm (Bobina térmica padrão)</option>
+                  <option value="58mm">58mm (Mini impressora térmica portátil)</option>
                 </select>
               </div>
 
@@ -1127,7 +1141,7 @@ export const MorePage: React.FC = () => {
             {/* Largura da Bobina */}
             <div>
               <label className="text-xs font-bold text-slate-900 dark:text-white block mb-1.5">
-                Largura da Bobina / Papel Térmico
+                Largura da Bobina / Formato do Papel
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -1140,7 +1154,7 @@ export const MorePage: React.FC = () => {
                   }`}
                 >
                   <span className="font-black text-sm">80mm</span>
-                  <span className="text-[10px] font-medium text-slate-500">Bobina Padrão (PDV Comercial)</span>
+                  <span className="text-[10px] font-medium text-slate-500 text-center">Térmica 80mm (Padrão)</span>
                 </button>
 
                 <button
@@ -1153,7 +1167,7 @@ export const MorePage: React.FC = () => {
                   }`}
                 >
                   <span className="font-black text-sm">58mm</span>
-                  <span className="text-[10px] font-medium text-slate-500">Mini Bobina (Bluetooth / USB)</span>
+                  <span className="text-[10px] font-medium text-slate-500 text-center">Térmica 58mm Portátil</span>
                 </button>
               </div>
             </div>
