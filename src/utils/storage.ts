@@ -1,4 +1,4 @@
-import { Category, Customer, Operator, Product, Quote, ReturnRecord, Sale, StoreSettings } from '../types';
+import { Category, Customer, Operator, Product, Quote, ReturnRecord, Sale, StockMovement, StoreSettings } from '../types';
 import { batchSyncAllToFirestore, saveSettingsToFirestore } from '../lib/firestoreSync';
 import { safeGetItem, safeRemoveItem, safeSetItem } from './safeStorage';
 
@@ -12,6 +12,7 @@ export const STORAGE_KEYS = {
   CURRENT_OPERATOR: 'odelot_pdv_curr_op_v3',
   RETURNS: 'odelot_pdv_returns_v3',
   SETTINGS: 'odelot_pdv_settings_v3',
+  STOCK_MOVEMENTS: 'odelot_pdv_movements_v3',
 };
 
 // Clean legacy sample caches from previous runs
@@ -289,6 +290,23 @@ export const saveStoredSettings = (settings: StoreSettings) => {
   safeSetItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
   window.dispatchEvent(new Event('odelot_settings_changed'));
   saveSettingsToFirestore(settings).catch((e) => console.warn('Firestore sync settings:', e));
+};
+
+export const getStoredStockMovements = (): StockMovement[] => {
+  const data = safeGetItem(STORAGE_KEYS.STOCK_MOVEMENTS);
+  if (!data) return [];
+  try {
+    return JSON.parse(data);
+  } catch {
+    return [];
+  }
+};
+
+export const saveStoredStockMovement = (movement: StockMovement) => {
+  const existing = getStoredStockMovements();
+  const updated = [movement, ...existing];
+  safeSetItem(STORAGE_KEYS.STOCK_MOVEMENTS, JSON.stringify(updated));
+  window.dispatchEvent(new Event('odelot_movements_changed'));
 };
 
 export const seedSampleData = () => {

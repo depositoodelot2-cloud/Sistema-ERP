@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
+  ArrowDownUp,
   Barcode,
   Check,
   ChevronDown,
@@ -19,7 +20,8 @@ import { BarcodeScannerModal } from '../components/BarcodeScannerModal';
 import { ConfirmModal } from '../components/ConfirmModal';
 import { ProductFormModal } from '../components/ProductFormModal';
 import { ProductImageZoomModal } from '../components/ProductImageZoomModal';
-import { Category, Product } from '../types';
+import { StockMovementModal } from '../components/StockMovementModal';
+import { Category, Product, StockMovement, StockMovementType } from '../types';
 import { formatCurrency } from '../utils/formatters';
 import { filterAndRankProducts } from '../utils/semanticSearch';
 import {
@@ -62,6 +64,8 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [zoomedProduct, setZoomedProduct] = useState<Product | null>(null);
+  const [movementProduct, setMovementProduct] = useState<Product | null>(null);
+  const [movementInitialType, setMovementInitialType] = useState<StockMovementType>('in');
 
   useEffect(() => {
     const handleProductsChange = () => setProducts(getStoredProducts());
@@ -187,18 +191,20 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({
         
         {/* 1. HEADER: Category Dropdown (where "Estoque" was) & Action Buttons */}
         <div className="flex items-center justify-between gap-2">
-          {/* Category Dropdown Button */}
-          <div className="relative">
+          {/* Category Dropdown Button (Fixed constant width) */}
+          <div className="relative shrink-0">
             <button
               type="button"
               onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-              className="h-10 px-3 sm:px-3.5 rounded-2xl bg-white dark:bg-[#0e172a] border border-slate-200 dark:border-[#1e2f52] hover:border-slate-300 dark:hover:border-[#2b4170] text-slate-800 dark:text-white flex items-center gap-2 text-xs font-bold transition-all shadow-2xs active:scale-[0.98] cursor-pointer"
+              className="h-10 w-[176px] sm:w-[190px] px-3 rounded-2xl bg-white dark:bg-[#0e172a] border border-slate-200 dark:border-[#1e2f52] hover:border-slate-300 dark:hover:border-[#2b4170] text-slate-800 dark:text-white flex items-center justify-between gap-1.5 text-xs font-bold transition-all shadow-2xs active:scale-[0.98] cursor-pointer shrink-0"
               title="Filtrar produtos por categoria"
             >
-              <Layers className="w-4 h-4 text-[#2563eb] shrink-0" />
-              <span className="truncate max-w-[110px] sm:max-w-[150px] font-black">
-                {activeCategoryName}
-              </span>
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <Layers className="w-4 h-4 text-[#2563eb] shrink-0" />
+                <span className="truncate font-black text-left">
+                  {activeCategoryName}
+                </span>
+              </div>
               <ChevronDown
                 className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${
                   showCategoryDropdown ? 'rotate-180' : ''
@@ -279,17 +285,18 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({
               <FileSpreadsheet className="w-5 h-5 stroke-[1.8]" />
             </button>
 
-            {/* Novo Produto Button */}
+            {/* Novo Button */}
             <button
               type="button"
               onClick={() => {
                 setEditingProduct(null);
                 setShowProductModal(true);
               }}
-              className="h-10 px-3.5 rounded-2xl bg-[#2563eb] hover:bg-blue-600 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-blue-500/20 active:scale-95 transition-all"
+              className="h-10 px-3.5 rounded-2xl bg-[#2563eb] hover:bg-blue-600 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-blue-500/20 active:scale-95 transition-all shrink-0 whitespace-nowrap cursor-pointer"
+              title="Cadastrar novo produto"
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
-              <span>Novo Produto</span>
+              <span>Novo</span>
             </button>
           </div>
         </div>
@@ -424,45 +431,46 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({
 
                 {/* Bottom Row: Quick Stock Stepper & Edit/Delete Buttons */}
                 <div className="pt-2 border-t border-slate-100 dark:border-[#16233d] flex items-center justify-between gap-2">
-                  {/* Stock Stepper (Horizontal & Compact) */}
+                  {/* Stock Display (Only Quantity) */}
                   <div className="flex items-center gap-2">
                     <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                       ESTOQUE
                     </span>
-                    <div className="rounded-lg border border-blue-200/80 dark:border-blue-900/60 bg-[#f0f6ff] dark:bg-[#111e3b] p-0.5 flex items-center shadow-2xs">
-                      <button
-                        type="button"
-                        onClick={() => handleQuickStockAdjust(product.id, -1)}
-                        className="w-6 h-6 rounded-md bg-white dark:bg-[#0e172a] text-blue-600 dark:text-blue-400 hover:bg-blue-50 flex items-center justify-center font-bold transition-colors active:scale-95 shadow-2xs"
-                        title="Diminuir estoque"
-                      >
-                        <Minus className="w-3 h-3 stroke-[2.5]" />
-                      </button>
-
-                      <span className="w-11 text-center text-xs font-bold text-slate-900 dark:text-white font-mono">
-                        {product.stock} {product.unit.toUpperCase()}
-                      </span>
-
-                      <button
-                        type="button"
-                        onClick={() => handleQuickStockAdjust(product.id, 1)}
-                        className="w-6 h-6 rounded-md bg-[#2563eb] text-white hover:bg-blue-600 flex items-center justify-center font-bold transition-colors active:scale-95 shadow-xs"
-                        title="Aumentar estoque"
-                      >
-                        <Plus className="w-3 h-3 stroke-[2.5]" />
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMovementProduct(product);
+                        setMovementInitialType('in');
+                      }}
+                      className="px-2.5 h-6 rounded-lg border border-blue-200/80 dark:border-blue-900/60 bg-[#f0f6ff] dark:bg-[#111e3b] text-center text-xs font-bold text-slate-900 dark:text-white font-mono hover:bg-blue-100/70 dark:hover:bg-[#182950] transition-colors cursor-pointer flex items-center justify-center shadow-2xs"
+                      title="Clique para movimentar estoque"
+                    >
+                      {product.stock} {product.unit.toUpperCase()}
+                    </button>
                   </div>
 
-                  {/* Actions: Edit & Delete */}
+                  {/* Actions: Stock Movement, Edit & Delete */}
                   <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMovementProduct(product);
+                        setMovementInitialType('in');
+                      }}
+                      className="w-7.5 h-7.5 rounded-lg border border-slate-200 dark:border-[#1a2846] bg-white dark:bg-[#0c1527] text-slate-600 dark:text-slate-300 hover:text-[#2563eb] hover:bg-blue-50 dark:hover:bg-[#152342] flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
+                      title="Movimentação de estoque"
+                    >
+                      <ArrowDownUp className="w-3.5 h-3.5" />
+                    </button>
+
                     <button
                       type="button"
                       onClick={() => {
                         setEditingProduct(product);
                         setShowProductModal(true);
                       }}
-                      className="w-7.5 h-7.5 rounded-lg border border-slate-200 dark:border-[#1a2846] bg-white dark:bg-[#0c1527] text-slate-600 dark:text-slate-300 hover:text-[#2563eb] hover:bg-blue-50 dark:hover:bg-[#152342] flex items-center justify-center transition-colors shadow-2xs"
+                      className="w-7.5 h-7.5 rounded-lg border border-slate-200 dark:border-[#1a2846] bg-white dark:bg-[#0c1527] text-slate-600 dark:text-slate-300 hover:text-[#2563eb] hover:bg-blue-50 dark:hover:bg-[#152342] flex items-center justify-center transition-colors shadow-2xs cursor-pointer"
                       title="Editar produto"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
@@ -490,6 +498,7 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({
         onClose={() => {
           setShowProductModal(false);
           setEditingProduct(null);
+          setProducts(getStoredProducts());
         }}
         onSave={handleSaveProduct}
         categories={categories}
@@ -519,6 +528,19 @@ export const InventoryPage: React.FC<InventoryPageProps> = ({
         isOpen={Boolean(zoomedProduct)}
         product={zoomedProduct}
         onClose={() => setZoomedProduct(null)}
+      />
+
+      {/* Stock Movement Modal (Adicionar / Tirar estoque) */}
+      <StockMovementModal
+        isOpen={Boolean(movementProduct)}
+        product={movementProduct}
+        initialType={movementInitialType}
+        onClose={() => setMovementProduct(null)}
+        onSuccess={(updatedProd) => {
+          setProducts((prev) =>
+            prev.map((p) => (p.id === updatedProd.id ? updatedProd : p))
+          );
+        }}
       />
     </div>
   );

@@ -20,9 +20,9 @@ export const SaleDetailModal: React.FC<SaleDetailModalProps> = ({
   onPrintReceipt,
   onCancelSale,
 }) => {
-  if (!isOpen || !sale) return null;
-
   const { isAdmin } = useAuth();
+
+  if (!isOpen || !sale) return null;
 
   const isCancelled = sale.status === 'cancelled';
   const isRefunded = sale.status === 'refunded';

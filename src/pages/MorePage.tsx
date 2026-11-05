@@ -83,6 +83,7 @@ export const MorePage: React.FC = () => {
   const [showTestReceiptModal, setShowTestReceiptModal] = useState(false);
   const [backupMessage, setBackupMessage] = useState<string | null>(null);
   const [showStandardizeModal, setShowStandardizeModal] = useState(false);
+  const [isSyncingCloud, setIsSyncingCloud] = useState(false);
 
   useEffect(() => {
     const handleCust = () => setCustomers(getStoredCustomers());
@@ -312,8 +313,6 @@ export const MorePage: React.FC = () => {
     reader.readAsText(file);
     e.target.value = '';
   };
-
-  const [isSyncingCloud, setIsSyncingCloud] = useState(false);
 
   const handleSyncCloud = async () => {
     setIsSyncingCloud(true);

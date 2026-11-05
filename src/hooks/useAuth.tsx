@@ -59,7 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const updated = operators.map((op) => (op.id === id ? { ...op, ...updates } : op));
     setOperators(updated);
     saveStoredOperators(updated);
-    if (currentOperator.id === id) {
+    if (currentOperator?.id === id) {
       const updatedCurr = { ...currentOperator, ...updates };
       setCurrentOperatorState(updatedCurr);
       saveCurrentOperator(updatedCurr);
@@ -71,7 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const updated = operators.filter((op) => op.id !== id);
     setOperators(updated);
     saveStoredOperators(updated);
-    if (currentOperator.id === id) {
+    if (currentOperator?.id === id) {
       const fallback = updated[0];
       setCurrentOperatorState(fallback);
       saveCurrentOperator(fallback);
@@ -79,7 +79,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return true;
   };
 
-  const isAdmin = currentOperator.role === 'admin';
+  const isAdmin = Boolean(currentOperator?.role === 'admin');
 
   return (
     <AuthContext.Provider

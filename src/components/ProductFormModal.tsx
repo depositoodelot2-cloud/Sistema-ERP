@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
+  ArrowDownUp,
   Barcode,
   Camera,
   Check,
@@ -9,11 +10,12 @@ import {
   X,
   ZoomIn,
 } from 'lucide-react';
-import { Category, Product, UnitType } from '../types';
+import { Category, Product, StockMovementType, UnitType } from '../types';
 import { getStoredCategories, saveStoredCategories } from '../utils/storage';
 import { BarcodeScannerModal } from './BarcodeScannerModal';
 import { CameraCaptureModal } from './CameraCaptureModal';
 import { ProductImageZoomModal } from './ProductImageZoomModal';
+import { StockMovementModal } from './StockMovementModal';
 import { formatCapitalizeWords, formatCurrency, formatTitleCase } from '../utils/formatters';
 import { playScannerBeep, validateBarcode } from '../utils/barcodeValidator';
 
@@ -55,6 +57,8 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   const [unit, setUnit] = useState<UnitType>(initialProduct?.unit || 'un');
   const [imageUrl, setImageUrl] = useState(initialProduct?.imageUrl || '');
   const [showImageZoom, setShowImageZoom] = useState(false);
+  const [showStockMovementModal, setShowStockMovementModal] = useState(false);
+  const [movementInitialType, setMovementInitialType] = useState<StockMovementType>('in');
 
   // Reset form when modal opens or initialProduct changes
   useEffect(() => {
@@ -454,44 +458,29 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
               {/* Estoque Atual */}
               <div>
                 <label className="text-xs font-bold text-slate-900 dark:text-slate-200 block mb-1">
-                  Estoque Atual *
+                  Estoque
                 </label>
-                <div className="rounded-2xl border border-blue-200 dark:border-blue-900/60 bg-[#f0f6ff] dark:bg-[#111c33] p-1 flex items-center justify-between shadow-2xs">
-                  <button
-                    type="button"
-                    onClick={() => setStock((prev) => Math.max(0, prev - 1))}
-                    className="w-7 h-7 rounded-xl bg-white dark:bg-[#1a2947] text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-[#22355c] flex items-center justify-center font-bold shadow-2xs transition-all active:scale-95 shrink-0"
-                    title="Diminuir"
-                  >
-                    -
-                  </button>
 
-                  <div className="flex items-center justify-center gap-0.5 flex-1 min-w-0 px-1">
-                    <input
-                      type="number"
-                      min="0"
-                      step="any"
-                      value={stock}
-                      onChange={(e) => {
-                        const parsed = parseFloat(e.target.value);
-                        setStock(isNaN(parsed) ? 0 : Math.max(0, parsed));
-                      }}
-                      onFocus={(e) => e.target.select()}
-                      className="w-11 text-center bg-transparent hover:bg-white/60 dark:hover:bg-white/10 focus:bg-white dark:focus:bg-[#1a2947] text-xs font-black text-slate-900 dark:text-white font-mono rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-400 py-0.5 transition-colors cursor-text"
-                      title="Clique para digitar a quantidade"
-                    />
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-9 px-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 flex items-center justify-between shadow-2xs">
+                    <span className="text-xs font-black text-slate-900 dark:text-white font-mono select-none">
+                      {stock}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-bold uppercase select-none">
                       {unit}
                     </span>
                   </div>
 
                   <button
                     type="button"
-                    onClick={() => setStock((prev) => prev + 1)}
-                    className="w-7 h-7 rounded-xl bg-[#2563eb] text-white hover:bg-blue-600 flex items-center justify-center font-bold shadow-xs transition-all active:scale-95 shrink-0"
-                    title="Aumentar"
+                    onClick={() => {
+                      setMovementInitialType('in');
+                      setShowStockMovementModal(true);
+                    }}
+                    className="w-9 h-9 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-[#2563eb] dark:hover:text-blue-400 flex items-center justify-center shadow-2xs transition-all active:scale-95 shrink-0 cursor-pointer"
+                    title="Movimentação de estoque (Adicionar ou Tirar)"
                   >
-                    +
+                    <ArrowDownUp className="w-4 h-4 stroke-[2.2]" />
                   </button>
                 </div>
               </div>
@@ -744,6 +733,34 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
         title={name || 'Foto do Produto'}
         subtitle={code ? `#${code}` : undefined}
       />
+
+      {/* Stock Movement Modal (Adicionar / Tirar estoque) */}
+      {showStockMovementModal && (
+        <StockMovementModal
+          isOpen={showStockMovementModal}
+          product={{
+            id: initialProduct?.id || 'temp-product',
+            code: code.trim().replace(/^#/, '') || initialProduct?.code || '0000',
+            barcode: barcode.trim() || initialProduct?.barcode || '',
+            name: name.trim() || initialProduct?.name || 'Produto',
+            description: initialProduct?.description || '',
+            category: category || categories[0]?.id || '',
+            costPrice: costPrice ?? (initialProduct?.costPrice || 0),
+            sellPrice: sellPrice ?? (initialProduct?.sellPrice || 0),
+            stock: stock,
+            minStock: minStock,
+            unit: unit,
+            imageUrl: imageUrl || initialProduct?.imageUrl || undefined,
+            createdAt: initialProduct?.createdAt || new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }}
+          initialType={movementInitialType}
+          onClose={() => setShowStockMovementModal(false)}
+          onSuccess={(updatedProd) => {
+            setStock(updatedProd.stock);
+          }}
+        />
+      )}
     </>
   );
 };

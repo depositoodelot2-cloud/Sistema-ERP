@@ -18,8 +18,6 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
   onClose,
   onNewSale,
 }) => {
-  if (!isOpen || !sale) return null;
-
   const settings: StoreSettings = getStoredSettings();
   const format: '80mm' | '58mm' = settings.printerWidth === '58mm' ? '58mm' : '80mm';
   const [isPrinting, setIsPrinting] = useState<boolean>(false);
@@ -51,6 +49,7 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
   }, [isOpen, sale, format, settings]);
 
   const handleWhatsAppShare = () => {
+    if (!sale) return;
     try {
       const text = generateReceiptShareText(sale, settings);
       const url = `https://api.whatsapp.com/send?text=${text}`;
@@ -78,12 +77,15 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
   };
 
   const handlePrint = () => {
+    if (!sale) return;
     setIsPrinting(true);
     setTimeout(() => {
       printReceipt(sale, settings, format);
       setTimeout(() => setIsPrinting(false), 800);
     }, 50);
   };
+
+  if (!isOpen || !sale) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-950/75 backdrop-blur-xs animate-in fade-in duration-150">

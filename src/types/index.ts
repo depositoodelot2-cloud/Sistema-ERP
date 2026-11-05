@@ -174,3 +174,19 @@ export interface DateRange {
   endDate: string;   // YYYY-MM-DD
   label: string;
 }
+
+export type StockMovementType = 'in' | 'out';
+
+export interface StockMovement {
+  id: string;
+  productId: string;
+  productCode: string;
+  productName: string;
+  type: StockMovementType;
+  quantity: number;
+  previousStock: number;
+  newStock: number;
+  reason?: string;
+  operatorName?: string;
+  date: string; // ISO String
+}

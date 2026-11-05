@@ -23,6 +23,21 @@ import { formatCurrency, getPaymentMethodLabel } from '../utils/formatters';
 import { filterAndRankSales } from '../utils/semanticSearch';
 import { getStoredSales, saveStoredSales } from '../utils/storage';
 
+// Format time (HH:mm) for sales rows
+const formatSaleTime = (isoString: string): string => {
+  if (!isoString) return '--:--';
+  try {
+    const date = new Date(isoString);
+    if (isNaN(date.getTime())) return '--:--';
+    return new Intl.DateTimeFormat('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date);
+  } catch {
+    return '--:--';
+  }
+};
+
 export const SalesHistoryPage: React.FC = () => {
   const [sales, setSales] = useState<Sale[]>(getStoredSales);
   const [selectedQuickDate, setSelectedQuickDate] = useState<'all' | 'today' | 'month'>('today');
@@ -48,21 +63,6 @@ export const SalesHistoryPage: React.FC = () => {
       window.removeEventListener('odelot_sales_changed', handleSalesChange);
     };
   }, []);
-
-  // Format time (HH:mm) for sales rows
-  const formatSaleTime = (isoString: string): string => {
-    if (!isoString) return '--:--';
-    try {
-      const date = new Date(isoString);
-      if (isNaN(date.getTime())) return '--:--';
-      return new Intl.DateTimeFormat('pt-BR', {
-        hour: '2-digit',
-        minute: '2-digit',
-      }).format(date);
-    } catch {
-      return '--:--';
-    }
-  };
 
   // Format label for Tudo button
   const customDateLabel = useMemo(() => {
