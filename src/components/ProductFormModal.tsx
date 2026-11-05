@@ -52,8 +52,8 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   const [sellPrice, setSellPrice] = useState<number | null>(
     initialProduct && initialProduct.sellPrice > 0 ? initialProduct.sellPrice : null
   );
-  const [stock, setStock] = useState<number>(initialProduct ? initialProduct.stock : 1);
-  const [minStock, setMinStock] = useState<number>(initialProduct ? initialProduct.minStock : 1);
+  const [stock, setStock] = useState<number>(initialProduct ? initialProduct.stock : 0);
+  const [minStock, setMinStock] = useState<number>(initialProduct ? initialProduct.minStock : 0);
   const [unit, setUnit] = useState<UnitType>(initialProduct?.unit || 'un');
   const [imageUrl, setImageUrl] = useState(initialProduct?.imageUrl || '');
   const [showImageZoom, setShowImageZoom] = useState(false);
@@ -70,20 +70,20 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
         setCategory(initialProduct.category || categories[0]?.id || '');
         setCostPrice(initialProduct.costPrice > 0 ? initialProduct.costPrice : null);
         setSellPrice(initialProduct.sellPrice > 0 ? initialProduct.sellPrice : null);
-        setStock(initialProduct.stock ?? 1);
-        setMinStock(initialProduct.minStock ?? 1);
+        setStock(initialProduct.stock ?? 0);
+        setMinStock(initialProduct.minStock ?? 0);
         setUnit(initialProduct.unit || 'un');
         setImageUrl(initialProduct.imageUrl || '');
       } else {
-        // Novo Produto: nome, preço de venda e preço de custo começam totalmente limpos
+        // Novo Produto: nome, preço de venda, preço de custo, estoque e estoque mínimo começam zerados/limpos
         setCode(Math.floor(10000 + Math.random() * 90000).toString());
         setBarcode('');
         setName('');
         setCategory(categories[0]?.id || '');
         setCostPrice(null);
         setSellPrice(null);
-        setStock(1);
-        setMinStock(1);
+        setStock(0);
+        setMinStock(0);
         setUnit('un');
         setImageUrl('');
       }

@@ -222,9 +222,9 @@ export const StockMovementModal: React.FC<StockMovementModalProps> = ({
             </button>
           </div>
 
-          {/* Row 3: Result Preview & Apply Button */}
-          <div className="bg-white dark:bg-[#111e38] rounded-2xl p-2.5 sm:p-3 px-3.5 sm:px-4 flex items-center justify-between border border-slate-200/70 dark:border-[#1e2f54] shadow-2xs gap-2">
-            <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium truncate">
+          {/* Row 3: Result Preview Card */}
+          <div className="bg-white dark:bg-[#111e38] rounded-2xl p-3 px-4 flex items-center justify-center border border-slate-200/70 dark:border-[#1e2f54] shadow-2xs">
+            <div className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 font-medium text-center">
               Novo Estoque:{' '}
               <span className="font-bold text-slate-800 dark:text-white">
                 {currentStock}
@@ -251,16 +251,17 @@ export const StockMovementModal: React.FC<StockMovementModalProps> = ({
                 {resultingStock} {product.unit.toUpperCase()}
               </span>
             </div>
-
-            <button
-              type="submit"
-              disabled={parsedQty <= 0}
-              className="bg-[#1d63ed] hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs sm:text-sm px-4 py-2 sm:py-2.5 rounded-xl flex items-center gap-1.5 shadow-sm active:scale-95 transition-all cursor-pointer shrink-0"
-            >
-              <Check className="w-4 h-4 stroke-[2.8]" />
-              <span>Aplicar</span>
-            </button>
           </div>
+
+          {/* Row 4: Apply Button (na linha abaixo) */}
+          <button
+            type="submit"
+            disabled={parsedQty <= 0}
+            className="w-full h-11 sm:h-12 bg-[#1d63ed] hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-sm rounded-2xl flex items-center justify-center gap-2 shadow-sm active:scale-[0.98] transition-all cursor-pointer"
+          >
+            <Check className="w-4.5 h-4.5 stroke-[2.8]" />
+            <span>Aplicar</span>
+          </button>
         </form>
       </div>
     </div>
